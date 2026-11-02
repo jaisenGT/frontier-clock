@@ -7,7 +7,7 @@
 // Writes site/data/intervals.json. Re-run after scripts/build_data.py.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { analyze, bootstrap, fromYear, monthlyGrid, toYear } from "../site/core.js";
+import { analyze, bootstrap, fitCapabilities, fromYear, monthlyGrid, toYear } from "../site/core.js";
 
 // Frontier curves offered on the site (keep in sync with MODE_SHORT in site/app.js).
 const SITE_MODES = ["step", "interp"];
@@ -27,6 +27,9 @@ for (const d of data.domains) {
   if (ids.length) selections.push({ key: d, ids });
 }
 
+// Subsets are put on the all-benchmarks ECI scale, as on the site (see core.js).
+const reference = fitCapabilities(data, selections[0].ids).capability;
+
 const r4 = (x) => Math.round(x * 1e4) / 1e4;
 const r2 = (x) => Math.round(x * 100) / 100;
 const runs = {};
@@ -38,13 +41,16 @@ for (const sel of selections) {
   for (const mode of SITE_MODES) {
     for (const minBenchmarks of MIN_BENCH) {
       done++;
-      const base = analyze(data, sel.ids, mode, { minBenchmarks });
+      const fitOpts = { minBenchmarks, reference: sel.key === "all" ? null : reference };
+      const base = analyze(data, sel.ids, mode, fitOpts);
       if (!base.frontier) continue;
       const grid = monthlyGrid(toYear(data.frontierStart), Math.max(...base.rows.map((r) => r.t)));
-      const ci = await bootstrap(data, sel.ids, mode, base, { reps, groups: GROUPS, grid, fitOpts: { minBenchmarks } });
+      const ci = await bootstrap(data, sel.ids, mode, base, { reps, groups: GROUPS, grid, fitOpts });
       runs[`${sel.key}|${mode}|${minBenchmarks}`] = {
         dates: Object.fromEntries([...ci.dateCI].map(([i, { lo, hi }]) => [i, [r4(lo), r4(hi)]])),
-        lags: Object.fromEntries(GROUPS.map((g) => [g, ci.lagCI[g].map((p) => [fromYear(p.T), r2(p.lo), r2(p.hi)])])),
+        caps: Object.fromEntries([...ci.capCI].map(([i, { lo, hi }]) => [i, [r2(lo), r2(hi)]])),
+        // [month, months lo, months hi, capability gap lo, capability gap hi]
+        lags: Object.fromEntries(GROUPS.map((g) => [g, ci.lagCI[g].map((p) => [fromYear(p.T), r2(p.lo), r2(p.hi), r2(p.capLo), r2(p.capHi)])])),
       };
       process.stdout.write(`\r${done}/${total}  ${sel.key} | ${mode} | min ${minBenchmarks}`.padEnd(70));
     }

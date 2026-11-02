@@ -332,7 +332,9 @@ async function updateIntervals() {
   if (run) {
     state.ci = {
       dateCI: new Map(Object.entries(run.dates).map(([i, [lo, hi]]) => [Number(i), { lo, hi }])),
-      lagCI: Object.fromEntries(Object.entries(run.lags).map(([g, pts]) => [g, pts.map(([T, lo, hi]) => ({ T: toYear(T), lo, hi }))])),
+      capCI: new Map(Object.entries(run.caps ?? {}).map(([i, [lo, hi]]) => [Number(i), { lo, hi }])),
+      lagCI: Object.fromEntries(Object.entries(run.lags).map(([g, pts]) =>
+        [g, pts.map(([T, lo, hi, capLo, capHi]) => ({ T: toYear(T), lo, hi, capLo, capHi }))])),
       reps: file.reps,
     };
     status.textContent = "";
@@ -346,7 +348,7 @@ async function updateIntervals() {
     reps,
     groups: LAG_GROUPS,
     grid: state.grid,
-    fitOpts: { minBenchmarks: state.minBench },
+    fitOpts: { minBenchmarks: state.minBench, reference: state.selected.size === state.data.benchmarks.length ? null : state.reference },
     onProgress: (d, n) => { if (token === ciToken) status.textContent = `computing ${Math.round((100 * d) / n)}%`; },
   });
   if (token !== ciToken) return;
@@ -500,12 +502,13 @@ function renderLegends() {
 }
 
 function hoverText(r) {
-  const ci = state.ci?.dateCI.get(r.i);
+  const ci = state.ci?.dateCI.get(r.i), capCi = state.ci?.capCI?.get(r.i);
   const ciTxt = ci ? `<br>90% interval: ${monthLabel(ci.lo)} – ${monthLabel(ci.hi)}` : "";
+  const capTxt = `<br>Capability: ${r.c.toFixed(1)} ${capUnit().short}` + (capCi ? ` (90%: ${capCi.lo.toFixed(1)} – ${capCi.hi.toFixed(1)})` : "");
   const flag = r.flag ? `<br><i>${{ extrapolated: "extrapolated beyond observed records", above: "beyond the latest record", below: "below the earliest record" }[r.flag]}</i>` : "";
   return `<b>${escapeHtml(r.model.name)}</b><br>${escapeHtml(r.model.org || "")}` +
     `<br>Frontier-equivalent: <b>${monthLabel(r.fdate)}</b>${ciTxt}` +
-    `<br>Released: ${monthLabel(r.t)} · ${(r.lagYears * 12).toFixed(1)} mo behind` +
+    `<br>Released: ${monthLabel(r.t)} · ${(r.lagYears * 12).toFixed(1)} mo behind` + capTxt +
     `<br>${r.nBench} benchmarks${r.isRecord ? " · frontier record" : ""}${flag}`;
 }
 
@@ -707,10 +710,11 @@ function renderLag() {
     const series = state.lags[g.key];
     if (!series?.length) continue;
     const color = css(g.color);
-    const band = months && state.ci?.lagCI[g.key];
+    // Intervals files from before capability bands have no capLo/capHi: no band then.
+    const band = state.ci?.lagCI[g.key]?.filter((p) => months || p.capLo != null);
     if (band?.length) {
-      traces.push({ x: band.map((p) => isoOf(p.T)), y: band.map((p) => p.hi), mode: "lines", line: { width: 0, shape: "hv" }, hoverinfo: "skip" });
-      traces.push({ x: band.map((p) => isoOf(p.T)), y: band.map((p) => p.lo), mode: "lines", line: { width: 0, shape: "hv" }, fill: "tonexty", fillcolor: hexA(color, 0.15), hoverinfo: "skip" });
+      traces.push({ x: band.map((p) => isoOf(p.T)), y: band.map((p) => (months ? p.hi : p.capHi)), mode: "lines", line: { width: 0, shape: "hv" }, hoverinfo: "skip" });
+      traces.push({ x: band.map((p) => isoOf(p.T)), y: band.map((p) => (months ? p.lo : p.capLo)), mode: "lines", line: { width: 0, shape: "hv" }, fill: "tonexty", fillcolor: hexA(color, 0.15), hoverinfo: "skip" });
     }
     traces.push({
       x: series.map((p) => isoOf(p.T)),
@@ -740,6 +744,15 @@ function renderFrontier() {
   for (const g of GROUPS) {
     const mine = rows.filter((r) => groupMeta(r.model.group) === g);
     if (!mine.length) continue;
+    if (state.ci?.capCI) {
+      // 90% capability intervals as thin vertical segments (as on the scatter chart).
+      const xs = [], ys = [];
+      for (const r of mine) {
+        const ci = state.ci.capCI.get(r.i);
+        if (ci) xs.push(isoOf(r.t), isoOf(r.t), null), ys.push(ci.lo, ci.hi, null);
+      }
+      traces.push({ x: xs, y: ys, mode: "lines", line: { color: css(g.color), width: 1 }, opacity: 0.45, hoverinfo: "skip" });
+    }
     traces.push({
       x: mine.map((r) => isoOf(r.t)), y: mine.map((r) => r.c),
       mode: "markers", name: g.key, opacity: 0.85,
@@ -760,7 +773,7 @@ function renderFrontier() {
     for (let k = 0; k <= n; k++) { const t = tMin + ((tMax - tMin) * k) / n; xs.push(isoOf(t)); ys.push(frontier.F(t)); }
     traces.push({ x: xs, y: ys, mode: "lines", line: { color: ink, width: 2 }, hoverinfo: "skip" });
   }
-  const cs = rows.map((r) => r.c);
+  const cs = rows.flatMap((r) => { const ci = state.ci?.capCI?.get(r.i); return ci ? [r.c, ci.lo, ci.hi] : [r.c]; });
   const lo = Math.min(...cs), hi = Math.max(...cs), pad = (hi - lo) * 0.05;
   Plotly.react("chart-frontier", traces, baseLayout({
     xaxis: { type: "date", title: { text: "Release date" } },

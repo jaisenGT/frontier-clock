@@ -432,13 +432,16 @@ export function monthlyGrid(t0, t1) {
  * refit (warm-started), rebuild the frontier and recompute dates.
  * Calls onProgress(done, total) between replicates; yields to the event loop so
  * the page stays responsive.
- * Returns Map modelIdx -> {lo, hi} for frontier dates and per-group lag bands.
+ * Returns Maps modelIdx -> {lo, hi} for frontier dates (dateCI) and capabilities (capCI),
+ * and per-group gap bands in months (lo, hi) and capability (capLo, capHi).
+ * Pass fitOpts.reference for a subset so every refit uses the base fit's scale.
  */
 export async function bootstrap(data, benchIds, mode, base, opts = {}) {
   const { reps = 40, level = 0.9, seed = 1, groups = [], grid = [], onProgress, fitOpts = {} } = opts;
   const rng = mulberry32(seed);
-  const samples = new Map();
+  const samples = new Map(), capSamples = new Map();
   const lagSamples = Object.fromEntries(groups.map((g) => [g, grid.map(() => [])]));
+  const capGapSamples = Object.fromEntries(groups.map((g) => [g, grid.map(() => [])]));
   for (let r = 0; r < reps; r++) {
     const weights = new Map();
     for (let k = 0; k < benchIds.length; k++) {
@@ -449,14 +452,19 @@ export async function bootstrap(data, benchIds, mode, base, opts = {}) {
     const res = analyzeFit(data, fit, mode);
     if (!res.frontier) continue;
     for (const row of res.rows) {
-      if (!samples.has(row.i)) samples.set(row.i, []);
+      if (!samples.has(row.i)) { samples.set(row.i, []); capSamples.set(row.i, []); }
       samples.get(row.i).push(row.fdate);
+      capSamples.get(row.i).push(row.c);
     }
     if (groups.length) {
       const lags = groupLags(res.rows, groups, grid);
       for (const g of groups) {
-        const byT = new Map(lags[g].map((p) => [p.T, p.lagMonths]));
-        grid.forEach((T, j) => { if (byT.has(T)) lagSamples[g][j].push(byT.get(T)); });
+        const byT = new Map(lags[g].map((p) => [p.T, p]));
+        grid.forEach((T, j) => {
+          if (!byT.has(T)) return;
+          lagSamples[g][j].push(byT.get(T).lagMonths);
+          capGapSamples[g][j].push(byT.get(T).capGap);
+        });
       }
     }
     onProgress?.(r + 1, reps);
@@ -468,12 +476,18 @@ export async function bootstrap(data, benchIds, mode, base, opts = {}) {
     return s[lo] + (s[hi] - s[lo]) * (x - lo);
   };
   const a = (1 - level) / 2;
-  const dateCI = new Map();
-  for (const [i, arr] of samples) if (arr.length >= reps / 2) dateCI.set(i, { lo: q(arr, a), hi: q(arr, 1 - a) });
+  const dateCI = new Map(), capCI = new Map();
+  for (const [i, arr] of samples) {
+    if (arr.length < reps / 2) continue;
+    const caps = capSamples.get(i);
+    dateCI.set(i, { lo: q(arr, a), hi: q(arr, 1 - a) });
+    capCI.set(i, { lo: q(caps, a), hi: q(caps, 1 - a) });
+  }
   const lagCI = {};
   for (const g of groups)
-    lagCI[g] = grid.map((T, j) => (lagSamples[g][j].length >= reps / 2
-      ? { T, lo: q(lagSamples[g][j], a), hi: q(lagSamples[g][j], 1 - a) }
-      : null)).filter(Boolean);
-  return { dateCI, lagCI, reps };
+    lagCI[g] = grid.map((T, j) => {
+      const m = lagSamples[g][j], c = capGapSamples[g][j];
+      return m.length >= reps / 2 ? { T, lo: q(m, a), hi: q(m, 1 - a), capLo: q(c, a), capHi: q(c, 1 - a) } : null;
+    }).filter(Boolean);
+  return { dateCI, capCI, lagCI, reps };
 }

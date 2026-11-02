@@ -163,6 +163,12 @@
           The frontier function F(t) is built from those records, either as a running max (a staircase) or by interpolating between records.</li>
         <li><strong>Frontier-equivalent date.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
         <li><strong>Gap.</strong> At each month, we compare the best model available from each group with the best available overall.</li>
+        <li><strong>90% intervals.</strong> We resample the selected benchmarks with replacement (some count twice, others drop out),
+          refit everything and repeat, then take the 5th–95th percentiles. Benchmark scores themselves are fixed; the intervals show
+          how much the results depend on which benchmarks are included. With all benchmarks, Claude 3.5 Sonnet and GPT-5 are pinned
+          to 130 and 150 in every refit, so they have no capability interval and models near them have narrow ones. For a benchmark
+          subset, each refit is rescaled to the all-benchmarks scores, which removes uncertainty about the scale itself, so
+          subset capability intervals look narrower than they are. Dates don't depend on the scale and aren't affected.</li>
         <li><strong>Coverage.</strong> <span id="coverage"></span></li>
       </ol>
       <h3>Caveats</h3>
