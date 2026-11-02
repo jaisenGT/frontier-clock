@@ -343,7 +343,7 @@ async function updateIntervals() {
     return;
   }
   // Custom selection: compute in the browser.
-  const reps = 40;
+  const reps = 100;
   const ci = await bootstrap(state.data, [...state.selected], state.mode, state.result, {
     reps,
     groups: LAG_GROUPS,

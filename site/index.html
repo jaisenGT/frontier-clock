@@ -35,7 +35,8 @@
       <h1>How long does the frontier stay ahead?</h1>
       <p class="lede">Many people think Chinese and open-source models are catching up to the US-led frontier.
         The size of the gap influences whether the US can afford an AI pause and the practicality of US-China coordination on AI safety.
-        Frontier Clock uses <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI’s</a> benchmark data (CC BY 4.0) to track these trends and others.</p>      </div>
+        Frontier Clock uses <a href="https://epoch.ai/benchmarks" target="_blank" rel="noopener">Epoch AI’s</a> benchmark data (CC BY 4.0) to track these trends and others.</p>
+      </div>
       <aside class="hero-stats" id="hero-stats" aria-label="Gap to the frontier today"></aside>
     </div>
   </section>
@@ -151,7 +152,7 @@
       <h2>Method</h2>
       <ol>
         <li><strong>Capability.</strong> For the selected benchmarks we fit an item-response model following the method of
-          <a href="https://epoch.ai/benchmarks/eci" rel="noopener">Epoch AI's Capabilities Index (ECI)</a>:
+          <a href="https://epoch.ai/benchmarks/eci" target="_blank" rel="noopener">Epoch AI's Capabilities Index (ECI)</a>:
           score ≈ sigmoid(a<sub>b</sub>·(C<sub>m</sub> − D<sub>b</sub>)), with a capability C per model and a
           difficulty D and slope a per benchmark. This puts models evaluated on different benchmarks on one scale.</li>
         <li><strong>ECI-scaled capability.</strong> Capabilities are shown on the ECI scale. With all benchmarks we pin the same
@@ -163,9 +164,12 @@
           The frontier function F(t) is built from those records, either as a running max (a staircase) or by interpolating between records.</li>
         <li><strong>Frontier-equivalent date.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
         <li><strong>Gap.</strong> At each month, we compare the best model available from each group with the best available overall.</li>
-        <li><strong>90% intervals.</strong> We resample the selected benchmarks with replacement (some count twice, others drop out),
-          refit everything and repeat, then take the 5th–95th percentiles. Benchmark scores themselves are fixed; the intervals show
-          how much the results depend on which benchmarks are included. With all benchmarks, Claude 3.5 Sonnet and GPT-5 are pinned
+        <li><strong>90% intervals.</strong> Each resample makes as many random draws as there are selected benchmarks (currently 47
+          for all benchmarks), with replacement, so a benchmark can count twice or drop out; any one benchmark is left out about a third of
+          the time. The same draws apply to every model. We refit everything on each resample, repeat, and take the 5th–95th percentiles.
+          Benchmark scores themselves are fixed; the intervals show how much the results depend on which benchmarks are included.
+          All benchmarks and each single domain use 1,000 precomputed resamples; any other selection runs 100 resamples in your
+          browser, so its interval ends are less precise (about ±0.3 months). With all benchmarks, Claude 3.5 Sonnet and GPT-5 are pinned
           to 130 and 150 in every refit, so they have no capability interval and models near them have narrow ones. For a benchmark
           subset, each refit is rescaled to the all-benchmarks scores, which removes uncertainty about the scale itself, so
           subset capability intervals look narrower than they are. Dates don't depend on the scale and aren't affected.</li>
@@ -180,8 +184,8 @@
         <li>Domain assignments are ours and editable in <code>data/domains.json</code>.</li>
       </ul>
       <h3>Data and attribution</h3>
-      <p>All benchmark scores come from <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI, “Capabilities &amp; benchmarking”</a>,
-        used under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>. Frontier Clock changes this data:
+      <p>All benchmark scores come from <a href="https://epoch.ai/benchmarks" target="_blank" rel="noopener">Epoch AI, “Capabilities &amp; benchmarking”</a>,
+        used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Frontier Clock changes this data:
         it refits capabilities with its own model and benchmark selection, leaves out models weaker than GPT-4 (Mar 2023) and
         benchmarks that only scored them, fills in missing metadata, and assigns benchmarks to domains.
         Frontier Clock is independent and not affiliated with or endorsed by Epoch AI.</p>

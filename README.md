@@ -32,7 +32,7 @@ All analysis lives in [site/core.js](site/core.js), a dependency-free ES module 
 ```sh
 # refresh data (needs pandas)
 python scripts/build_data.py            # or --offline to rebuild from data/raw/
-node cli/precompute_intervals.mjs       # 90% intervals for standard selections (~10 min)
+node cli/precompute_intervals.mjs       # 90% intervals for standard selections, 1,000 resamples (~15 min)
 
 # view the site
 cd site && python -m http.server 8765   # open http://localhost:8765

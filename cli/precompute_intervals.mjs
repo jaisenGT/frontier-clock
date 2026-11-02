@@ -2,7 +2,7 @@
 // each single domain) × every frontier mode × every min-benchmarks option, so the site
 // can show them instantly. Custom selections are still computed in the browser.
 //
-//   node cli/precompute_intervals.mjs [--reps 100]
+//   node cli/precompute_intervals.mjs [--reps 1000]
 //
 // Writes site/data/intervals.json. Re-run after scripts/build_data.py.
 
@@ -13,7 +13,7 @@ import { analyze, bootstrap, fitCapabilities, fromYear, monthlyGrid, toYear } fr
 const SITE_MODES = ["step", "interp"];
 
 const args = process.argv.slice(2);
-const reps = Number(args[args.indexOf("--reps") + 1] || 0) || 100;
+const reps = Number(args[args.indexOf("--reps") + 1] || 0) || 1000;
 const MIN_BENCH = [1, 2, 3, 5]; // keep in sync with the <select> in index.html
 const GROUPS = ["US closed", "China", "Open weights (non-China)"];
 
