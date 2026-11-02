@@ -672,7 +672,8 @@ function renderScatter() {
   }
   // Direct labels for each group's most advanced model, set in a gutter to the right of
   // the newest release so they never sit on top of points. Nudged apart vertically.
-  // The lab view has none: its legend names the lines.
+  // The lab view has none (its legend names the lines) but keeps the gutter, so the axes
+  // don't shift when switching views.
   const labelled = view === "labs" ? [] : series.slice(0, 3).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
   const tMaxRel = Math.max(...rows.map((r) => r.t));
   const labelX = tMaxRel + 0.08;
@@ -691,7 +692,7 @@ function renderScatter() {
   });
   const yMin = isoOf(Math.min(...rows.map((r) => r.fdate)) - 0.12);
   Plotly.react("chart-scatter", traces, baseLayout({
-    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + (labelled.length ? 0.62 : 0.1))] },
+    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + 0.62)] },
     yaxis: { type: "date", title: { text: "Frontier-equivalent date" }, range: [yMin, isoOf(yMax + 0.15)] },
     annotations,
   }), plotConfig);
