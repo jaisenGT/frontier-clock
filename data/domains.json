@@ -1,0 +1,69 @@
+{
+  "_comment": "Maps each Epoch benchmark to one domain. Edit freely; re-run scripts/build_data.py afterwards. Benchmarks missing from this file land in 'Unclassified'.",
+  "domains": {
+    "Math": [
+      "FrontierMath-2025-02-28-Private",
+      "FrontierMath-Tier-4-2025-07-01-Private",
+      "FrontierMath-Tiers-1-3-v2-Private",
+      "FrontierMath-Tier-4-v2-Private",
+      "MATH level 5",
+      "OTIS Mock AIME 2024-2025",
+      "GSM8K",
+      "ProofBench"
+    ],
+    "Software engineering": [
+      "Aider polyglot",
+      "GSO-Bench",
+      "MirrorCode",
+      "FrontierCode",
+      "FrontierSWE",
+      "Terminal Bench",
+      "WeirdML",
+      "WeirdML v3",
+      "PostTrainBench",
+      "CadEval",
+      "Cybench",
+      "ExploitBench"
+    ],
+    "Agents & computer use": [
+      "OSWorld",
+      "OSWorld 2.0",
+      "The Agent Company",
+      "APEX-Agents",
+      "Remote Labor Index",
+      "GDPval",
+      "DeepResearch Bench",
+      "METR Time Horizons"
+    ],
+    "Science & knowledge": [
+      "GPQA diamond",
+      "SimpleQA Verified",
+      "MMLU",
+      "TriviaQA",
+      "Surface Evolver Bench"
+    ],
+    "Reasoning, games & puzzles": [
+      "ARC-AGI",
+      "ARC-AGI-2",
+      "SimpleBench",
+      "Chess Puzzles",
+      "Mystery Game Puzzles",
+      "EBR-bench",
+      "SpireClimb",
+      "Balrog",
+      "BBH"
+    ],
+    "Vision & spatial": [
+      "VPCT",
+      "GeoBench",
+      "Furniture Assembly"
+    ],
+    "Unclassified": [
+      "LMCA",
+      "DTBench",
+      "CL-bench",
+      "CL-bench Life",
+      "Fiction.LiveBench"
+    ]
+  }
+}

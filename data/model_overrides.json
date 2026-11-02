@@ -1,0 +1,22 @@
+{
+  "_comment": "Metadata for models whose organization/country/accessibility is blank in Epoch's eci_scores.csv. Fields here replace Epoch's values.",
+  "models": {
+    "PaLM 2-L": {"org": "Google", "country": "United States of America", "access": "Closed weights"},
+    "PaLM 2-M": {"org": "Google", "country": "United States of America", "access": "Closed weights"},
+    "PaLM 2-S": {"org": "Google", "country": "United States of America", "access": "Closed weights"},
+    "Qwen2.5-Coder-14B": {"org": "Alibaba", "country": "China", "access": "Open weights"},
+    "Qwen2.5-Coder-3B": {"org": "Alibaba", "country": "China", "access": "Open weights"},
+    "Qwen2.5-Coder-0.5B": {"org": "Alibaba", "country": "China", "access": "Open weights"},
+    "CodeQwen1.5-7B": {"org": "Alibaba", "country": "China", "access": "Open weights"},
+    "Qwen-1_8B": {"org": "Alibaba", "country": "China", "access": "Open weights"},
+    "internlm-20b": {"org": "Shanghai AI Laboratory", "country": "China", "access": "Open weights"},
+    "internlm-7b": {"org": "Shanghai AI Laboratory", "country": "China", "access": "Open weights"},
+    "DeepSeek-Coder-V2-Lite-Base": {"org": "DeepSeek", "country": "China", "access": "Open weights"},
+    "Yi-9B": {"org": "01.AI", "country": "China", "access": "Open weights"},
+    "chatglm2-6b": {"org": "Zhipu AI", "country": "China", "access": "Open weights"},
+    "vicuna-13b-v1.1": {"org": "LMSYS", "country": "United States of America", "access": "Open weights"},
+    "open_llama_7b": {"org": "OpenLM Research", "country": "United States of America", "access": "Open weights"},
+    "RedPajama-INCITE-7B-Base": {"org": "Together", "country": "United States of America", "access": "Open weights"},
+    "stablelm-tuned-alpha-7b": {"org": "Stability AI", "country": "United Kingdom", "access": "Open weights"}
+  }
+}

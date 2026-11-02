@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frontier Clock</title>
+  <meta name="description" content="Scores AI models by the date at which they would have been the most capable model in the world.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly-basic.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M12 6.5V12l3.75 2.5" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Frontier Clock
+      </a>
+      <nav class="nav">
+        <a href="#explore">Explore</a>
+        <a href="#models">Models</a>
+        <a href="#method">Method</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+      <h1>How long does the frontier stay ahead?</h1>
+      <p class="lede">New AI capabilities, including dangerous ones, spread beyond the labs that first build them.
+        Frontier Clock measures how fast by scoring every model with a date: the moment the frontier first reached its capability.
+        A model as good as the best model of March 2025 reads <span class="mono">Mar 2025</span>, whenever it was released.</p>
+      <p class="source">Benchmark data: <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI</a> (CC BY 4.0) · <a href="#method">Method</a></p>
+      </div>
+      <aside class="hero-stats" id="hero-stats" aria-label="Gap to the frontier today"></aside>
+    </div>
+  </section>
+
+  <div class="controlbar" id="controlbar">
+    <div class="wrap controlbar-inner">
+      <div class="control dropdown" id="domain-dd">
+        <span class="sr-only" id="domains-label">Benchmarks</span>
+        <button id="domain-btn" class="btn dd-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="domain-panel" aria-describedby="domains-label">
+          <span id="domain-summary">All domains</span>
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div id="domain-panel" class="dd-panel" hidden>
+          <div class="dd-head">
+            <span id="bench-count"></span>
+            <span class="dd-actions">
+              <button type="button" class="link-btn" id="sel-all">Select all</button>
+              <button type="button" class="link-btn" id="sel-none">Clear</button>
+            </span>
+          </div>
+          <div id="domain-list" class="dd-list"></div>
+        </div>
+      </div>
+      <div class="control">
+        <span class="control-label" id="mode-label">Frontier curve</span>
+        <div class="segmented" id="mode-seg" role="radiogroup" aria-labelledby="mode-label"></div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="min-bench">Min. benchmarks</label>
+        <select id="min-bench">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <label class="control switch">
+        <input type="checkbox" id="ci-toggle" role="switch">
+        <span class="track" aria-hidden="true"></span>
+        <span class="control-label">90% intervals</span>
+        <span id="ci-status" class="status" aria-live="polite"></span>
+      </label>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section id="explore" class="section">
+      <div class="section-head">
+        <h2>Frontier-equivalent date vs. release date</h2>
+        <div class="head-row">
+          <p id="scatter-desc"></p>
+          <div class="segmented" id="scatter-view" role="radiogroup" aria-label="Models shown"></div>
+        </div>
+      </div>
+      <div id="legend-scatter" class="legend"></div>
+      <div id="chart-scatter" class="chart chart-tall"></div>
+    </section>
+
+    <div class="grid-2">
+      <section class="section">
+        <div class="section-head">
+          <h2>Gap to the frontier</h2>
+          <p id="lag-desc"></p>
+          <div class="segmented seg-sm" id="lag-unit" role="radiogroup" aria-label="Gap units"></div>
+        </div>
+        <div id="legend-lag" class="legend"></div>
+        <div id="chart-lag" class="chart"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>The frontier curve</h2>
+          <p id="mode-help"></p>
+        </div>
+        <div class="legend" id="legend-frontier"></div>
+        <div id="chart-frontier" class="chart"></div>
+      </section>
+    </div>
+
+    <section id="labs" class="section">
+      <div class="section-head">
+        <h2>Each lab's best models</h2>
+        <p>Ring: release date. Dot: clock reading. The line between them is how far behind the model was on release day.
+          Up to three product lines per lab (e.g. Claude Fable and Claude Opus), each within three months of that lab's best; labs with a release in the past year. <span id="labs-count" class="muted"></span></p>
+      </div>
+      <div id="legend-labs" class="legend"></div>
+      <div id="chart-labs" class="chart"></div>
+    </section>
+
+    <section id="models" class="section">
+      <div class="section-head row">
+        <h2>All models</h2>
+        <input id="search" class="search" type="search" placeholder="Filter by model or organization" aria-label="Filter models">
+      </div>
+      <div class="table-wrap">
+        <table id="model-table">
+          <thead><tr>
+            <th data-key="name">Model</th>
+            <th data-key="org">Organization</th>
+            <th data-key="group">Group</th>
+            <th data-key="t" class="num">Released</th>
+            <th data-key="fdate" class="num">Clock reading</th>
+            <th data-key="lag" class="num">Behind at release</th>
+            <th data-key="nBench" class="num">Benchmarks</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="footnote">* Outside the range of observed frontier models: extrapolated, or bounded by the first or last record.</p>
+    </section>
+
+    <section id="method" class="section prose">
+      <h2>Method</h2>
+      <ol>
+        <li><strong>Capability.</strong> For the selected benchmarks we fit an item-response model following the method of
+          <a href="https://epoch.ai/benchmarks/eci" rel="noopener">Epoch AI's Capabilities Index (ECI)</a>:
+          score ≈ sigmoid(a<sub>b</sub>·(C<sub>m</sub> − D<sub>b</sub>)), with a capability C per model and a
+          difficulty D and slope a per benchmark. This puts models evaluated on different benchmarks on one scale.</li>
+        <li><strong>ECI-scaled capability.</strong> Capabilities are shown on the ECI scale. With all benchmarks we pin the same
+          two reference models Epoch uses (Claude 3.5 Sonnet = 130, GPT-5 = 150); our scores then match Epoch's published ECI
+          with <span id="eci-corr">r ≈ 0.997</span>, typically within about a point. For a subset of benchmarks we rescale
+          to match the all-benchmarks scores of the same models, so every selection uses the same points.
+          These are our own fits, not Epoch's official ECI values, and will differ from them for domain subsets.</li>
+        <li><strong>Frontier.</strong> A model is a frontier record if, at release, it was more capable than every model released before it.
+          The frontier function F(t) is built from those records, either as a running max (a staircase) or by interpolating between records.</li>
+        <li><strong>Clock reading.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
+        <li><strong>Gap.</strong> At each month, we compare the best model available from each group with the best available overall.</li>
+        <li><strong>Coverage.</strong> <span id="coverage"></span></li>
+      </ol>
+      <h3>Caveats</h3>
+      <ul>
+        <li>Dates are of <em>public release</em>; labs often hold stronger models internally.</li>
+        <li>If frontier progress accelerates, a constant capability gap shows up as a shrinking gap in months. Switch the gap chart to capability units to check.</li>
+        <li>Scores come from Epoch's internal runs and external reports and inherit their elicitation, contamination and harness differences.</li>
+        <li>The gap lines for China and open weights start only once a group's best model passes GPT-4 (early 2025 and mid-2024). Before that they were more than a GPT-4 generation behind, which this data can't date.</li>
+        <li>Domain assignments are ours and editable in <code>data/domains.json</code>.</li>
+      </ul>
+      <h3>Data and attribution</h3>
+      <p>All benchmark scores come from <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI, “Capabilities &amp; benchmarking”</a>,
+        used under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>. Frontier Clock changes this data:
+        it refits capabilities with its own model and benchmark selection, leaves out models weaker than GPT-4 (Mar 2023) and
+        benchmarks that only scored them, fills in missing metadata, and assigns benchmarks to domains.
+        Frontier Clock is independent and not affiliated with or endorsed by Epoch AI.</p>
+      <p class="footnote" id="credit"></p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

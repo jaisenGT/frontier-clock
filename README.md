@@ -1,0 +1,55 @@
+# Frontier Clock
+
+Scores AI models by **frontier-equivalent date**: the date at which a model would have been the most capable model in the world.
+
+## How it works
+
+1. **Capability.** For a chosen set of benchmarks, fit an item-response model in the style of Epoch's Capabilities Index (ECI): `score ≈ sigmoid(a_b · (C_m − D_b))`. Scores are put on the ECI scale: with all benchmarks by pinning Epoch's anchor models (Claude 3.5 Sonnet = 130, GPT-5 = 150), which reproduces Epoch's published ECI (r ≈ 0.997, typically within a point); for a subset of benchmarks by matching the all-benchmarks scores of the same models.
+2. **Frontier.** Record-setting models are those more capable at release than every earlier model. The frontier curve F(t) is built from the records:
+   - running max: honest but lumpy (site)
+   - interpolated records (site default)
+   - linear trend, and a two-segment "accelerating" trend (CLI only, for robustness checks)
+3. **Date.** A model's score is F⁻¹(C).
+4. **Gap.** Each month, compare the best available model per group (US closed, China, non-China open weights) with the best available overall. The gap is shown in months and in capability units.
+5. **Uncertainty.** Resample benchmarks with replacement (bootstrap), refit, and take percentile intervals.
+
+All analysis lives in [site/core.js](site/core.js), a dependency-free ES module that runs in both the browser and Node.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `scripts/build_data.py` | Downloads Epoch's `benchmark_data.zip` and writes `site/data/frontier_clock.json` |
+| `data/domains.json` | Benchmark → domain mapping (hand-assigned, edit freely) |
+| `data/model_overrides.json` | Fills in missing org/country/accessibility in Epoch's data |
+| `site/` | Static website (`index.html`, `app.js`, `core.js`, `styles.css`) |
+| `cli/analyze.mjs` | Same analysis from the command line |
+| `cli/precompute_intervals.mjs` | Precomputes bootstrap intervals into `site/data/intervals.json` for all-benchmarks and each single domain, every curve mode and minimum; custom selections are computed in the browser |
+
+## Usage
+
+```sh
+# refresh data (needs pandas)
+python scripts/build_data.py            # or --offline to rebuild from data/raw/
+node cli/precompute_intervals.mjs       # 90% intervals for standard selections (~10 min)
+
+# view the site
+cd site && python -m http.server 8765   # open http://localhost:8765
+
+# command line
+node cli/analyze.mjs --validate                          # compare with Epoch ECI
+node cli/analyze.mjs --mode broken --domain "Math" --top 20
+```
+
+Modes: `step`, `interp`, `linear`, `broken`. Domains are listed in `data/domains.json`.
+
+## Known limitations
+
+- Epoch's data starts in Feb 2023. Frontier records count only from GPT-4 (2023-03-14); weaker models get extrapolated dates, which are flagged.
+- Dates are of public release, not internal availability.
+- If frontier progress speeds up, a constant capability gap appears as a shrinking gap in months.
+- These benchmarks have no published descriptions yet and are unclassified: LMCA, DTBench, CL-bench, CL-bench Life.
+
+## Data
+
+Epoch AI, "Capabilities & benchmarking", https://epoch.ai/benchmarks, licensed CC BY 4.0. Underlying external benchmark results keep their original licenses.
