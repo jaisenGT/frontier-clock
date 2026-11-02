@@ -33,11 +33,9 @@
     <div class="wrap hero-grid">
       <div class="hero-text">
       <h1>How long does the frontier stay ahead?</h1>
-      <p class="lede">New AI capabilities, including dangerous ones, spread beyond the labs that first build them.
-        Frontier Clock measures how fast by scoring every model with a date: the moment the frontier first reached its capability.
-        A model as good as the best model of March 2025 reads <span class="mono">Mar 2025</span>, whenever it was released.</p>
-      <p class="source">Benchmark data: <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI</a> (CC BY 4.0) · <a href="#method">Method</a></p>
-      </div>
+      <p class="lede">Many people think Chinese and open-source models are catching up to the US-led frontier.
+        The size of the gap influences whether the US can afford an AI pause and the practicality of US-China coordination on AI safety.
+        Frontier Clock uses <a href="https://epoch.ai/benchmarks" rel="noopener">Epoch AI’s</a> benchmark data (CC BY 4.0) to track these trends and others.</p>      </div>
       <aside class="hero-stats" id="hero-stats" aria-label="Gap to the frontier today"></aside>
     </div>
   </section>
@@ -109,7 +107,7 @@
 
       <section class="section">
         <div class="section-head">
-          <h2>The frontier curve</h2>
+          <h2>Capability vs. release date</h2>
           <p id="mode-help"></p>
         </div>
         <div class="legend" id="legend-frontier"></div>
@@ -120,7 +118,7 @@
     <section id="labs" class="section">
       <div class="section-head">
         <h2>Each lab's best models</h2>
-        <p>Ring: release date. Dot: clock reading. The line between them is how far behind the model was on release day.
+        <p>Ring: release date. Dot: frontier-equivalent date. The line between them is how far behind the model was on release day.
           Up to three product lines per lab (e.g. Claude Fable and Claude Opus), each within three months of that lab's best; labs with a release in the past year. <span id="labs-count" class="muted"></span></p>
       </div>
       <div id="legend-labs" class="legend"></div>
@@ -138,8 +136,8 @@
             <th data-key="name">Model</th>
             <th data-key="org">Organization</th>
             <th data-key="group">Group</th>
-            <th data-key="t" class="num">Released</th>
-            <th data-key="fdate" class="num">Clock reading</th>
+            <th data-key="t" class="num">Release date</th>
+            <th data-key="fdate" class="num">Frontier-equivalent date</th>
             <th data-key="lag" class="num">Behind at release</th>
             <th data-key="nBench" class="num">Benchmarks</th>
           </tr></thead>
@@ -163,7 +161,7 @@
           These are our own fits, not Epoch's official ECI values, and will differ from them for domain subsets.</li>
         <li><strong>Frontier.</strong> A model is a frontier record if, at release, it was more capable than every model released before it.
           The frontier function F(t) is built from those records, either as a running max (a staircase) or by interpolating between records.</li>
-        <li><strong>Clock reading.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
+        <li><strong>Frontier-equivalent date.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
         <li><strong>Gap.</strong> At each month, we compare the best model available from each group with the best available overall.</li>
         <li><strong>Coverage.</strong> <span id="coverage"></span></li>
       </ol>

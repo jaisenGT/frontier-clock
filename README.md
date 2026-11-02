@@ -24,6 +24,7 @@ All analysis lives in [site/core.js](site/core.js), a dependency-free ES module 
 | `data/model_overrides.json` | Fills in missing org/country/accessibility in Epoch's data |
 | `site/` | Static website (`index.html`, `app.js`, `core.js`, `styles.css`) |
 | `cli/analyze.mjs` | Same analysis from the command line |
+| `IDEAS.md` | Possible extensions (not yet implemented unless marked) |
 | `cli/precompute_intervals.mjs` | Precomputes bootstrap intervals into `site/data/intervals.json` for all-benchmarks and each single domain, every curve mode and minimum; custom selections are computed in the browser |
 
 ## Usage
@@ -45,9 +46,16 @@ Modes: `step`, `interp`, `linear`, `broken`. Domains are listed in `data/domains
 
 ## Known limitations
 
+Most important first. Keep these in mind before quoting any number.
+
+- **Public release dates, not internal availability.** Labs use stronger models internally for months before release, so the true lead of whoever is ahead (today, US labs) is probably *understated*. See [IDEAS.md](IDEAS.md) for a possible correction.
+- **Months depend on frontier speed.** If frontier progress speeds up, a constant capability gap appears as a shrinking gap in months (and vice versa). Check the capability-units view before reading a trend in months.
+- **Benchmaxxing and contamination.** Capabilities are only as good as Epoch's benchmark scores. A group whose models score higher on public benchmarks than their real-world capability would look closer to the frontier than it is. This is a limitation of the input data that we inherit rather than fix.
+- **Winner's curse in the frontier records.** A record is a model whose *estimated* capability beats every earlier model, so estimation noise biases the record frontier upward and every other model's lag slightly upward. The benchmark bootstrap re-selects records but doesn't remove the bias. Small for now, but worth checking (e.g. require records to beat the previous one by more than their CI).
+- **Benchmark coverage differs by group.** The median US closed model is scored on ~16 benchmarks, the median Chinese or non-China open-weights model on ~8–9, since expensive benchmarks are mostly run on frontier models. The IRT fit tolerates missing scores, but not systematically missing ones. Acceptable as long as each group's leading models are well covered; check the "Benchmarks" column for any model a headline number depends on.
+- **Interpolation can squeeze dates when records cluster.** In `interp` mode, two records set days apart (e.g. Claude Fable 5.1 and GPT-6 Astra, Sep 2026) map every capability between them to those few days. Deliberately kept simple for now; the running-max mode is the cross-check.
+- **Gap is measured against the overall leader.** The US closed lag is zero whenever a US closed model leads, by construction. US open-weights models (Llama, gpt-oss) count as "Open weights (non-China)"; Chinese models count as "China" whatever their access.
 - Epoch's data starts in Feb 2023. Frontier records count only from GPT-4 (2023-03-14); weaker models get extrapolated dates, which are flagged.
-- Dates are of public release, not internal availability.
-- If frontier progress speeds up, a constant capability gap appears as a shrinking gap in months.
 - These benchmarks have no published descriptions yet and are unclassified: LMCA, DTBench, CL-bench, CL-bench Life.
 
 ## Data

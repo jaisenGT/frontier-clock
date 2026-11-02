@@ -10,6 +10,20 @@ const GROUPS = [
 ];
 const LAG_GROUPS = GROUPS.slice(0, 3).map((g) => g.key);
 
+// Labs offered in the "By lab" view. Each keeps a fixed color, so toggling others never
+// repaints it. Eight is the categorical palette's limit; these have the most frontier-level
+// models (Z.ai and Mistral, next in line, are left out).
+const LABS = [
+  { key: "OpenAI", color: "--lab-1" },
+  { key: "Anthropic", color: "--lab-2" },
+  { key: "Google DeepMind", color: "--lab-3" },
+  { key: "xAI", color: "--lab-4" },
+  { key: "Meta AI", color: "--lab-5" },
+  { key: "DeepSeek", color: "--lab-6" },
+  { key: "Alibaba", color: "--lab-7" },
+  { key: "Moonshot", color: "--lab-8" },
+];
+
 // Frontier curves offered on the site (core.js also has "linear" and "broken", kept for the CLI).
 const MODE_SHORT = { step: "Running max", interp: "Interpolated" };
 
@@ -24,7 +38,8 @@ const state = {
   mode: "interp",
   minBench: 2,
   lagUnit: "months",
-  scatterView: "leaders", // "leaders": each group's record-setters only; "all": every model
+  scatterView: "leaders", // "leaders": each group's record-setters; "labs": each lab's record-setters; "all": every model
+  labsOn: new Set(["OpenAI", "Anthropic", "Google DeepMind", "DeepSeek", "Moonshot"]),
   result: null,
   lags: null,
   grid: null,
@@ -165,7 +180,7 @@ function buildControls() {
   }
 
   const viewSeg = $("scatter-view");
-  for (const [k, label] of [["leaders", "Group leaders"], ["all", "All models"]]) {
+  for (const [k, label] of [["leaders", "Group leaders"], ["labs", "By lab"], ["all", "All models"]]) {
     const b = document.createElement("button");
     b.type = "button";
     b.role = "radio";
@@ -235,11 +250,12 @@ function syncControls() {
   document.querySelectorAll("#mode-seg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === state.mode));
   document.querySelectorAll("#lag-unit button").forEach((b) => b.setAttribute("aria-checked", b.dataset.unit === state.lagUnit));
   document.querySelectorAll("#scatter-view button").forEach((b) => b.setAttribute("aria-checked", b.dataset.view === state.scatterView));
-  $("scatter-desc").textContent = {
+  $("scatter-desc").textContent = "A model's frontier-equivalent date is when the frontier first reached its capability: a model as good as the best model of March 2025 reads Mar 2025, no matter when it was released. " + {
     leaders: "Each point is a model that beat every earlier model from its group, connected to show each group's trend. The gap between the lines is charted below.",
+    labs: "Each point is a model that beat every earlier model from its lab, connected to show each lab's trend. Marker shape shows the group. Click a lab to show or hide it.",
     all: "Models on the diagonal were the frontier when they launched. The vertical drop below it is how far behind they were on release day.",
   }[state.scatterView];
-  $("mode-help").textContent = MODE_HELP[state.mode];
+  $("mode-help").textContent = `The black line is the frontier. A model's frontier-equivalent date is when that line reached the model's capability. ${MODE_HELP[state.mode]}`;
   $("lag-desc").textContent = state.lagUnit === "months"
     ? "Each month: how much earlier the frontier reached the best model available from each group, compared with the best model available overall."
     : "Each month: capability of the best model overall minus the best model from each group, in ECI points (Claude 3.5 Sonnet = 130, GPT-5 = 150). Unlike months, this unit doesn't depend on how fast the frontier is moving.";
@@ -360,9 +376,9 @@ function emptyMessage() {
   return state.selected.size ? "Too few models in this selection to draw a frontier. Add more benchmarks." : "Select at least one benchmark.";
 }
 
-// Models that beat every earlier model from their own group (same rule as the gap chart).
-function groupLeaders(rows, groupKey) {
-  const mine = rows.filter((r) => r.model.group === groupKey).sort((a, b) => a.t - b.t || b.c - a.c);
+// Models that beat every earlier model in `rows`, e.g. one group's or one lab's (same rule as the gap chart).
+function leaders(rows) {
+  const mine = [...rows].sort((a, b) => a.t - b.t || b.c - a.c);
   const out = [];
   let best = -Infinity;
   for (const r of mine) if (r.c > best) { best = r.c; out.push(r); }
@@ -445,7 +461,26 @@ function renderLegends() {
       el.append(s);
     }
   };
-  fill($("legend-scatter"), state.scatterView === "leaders" ? GROUPS.slice(0, 3) : GROUPS, false);
+  if (state.scatterView === "labs") {
+    // Lab chips double as toggles.
+    const el = $("legend-scatter");
+    el.replaceChildren();
+    for (const l of LABS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(state.labsOn.has(l.key)));
+      b.innerHTML = `<svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="${css(l.color)}" stroke-width="2" stroke-linecap="round"/></svg>`;
+      b.append(l.key);
+      b.addEventListener("click", () => {
+        state.labsOn.has(l.key) ? state.labsOn.delete(l.key) : state.labsOn.add(l.key);
+        renderLegends();
+        renderScatter();
+      });
+      el.append(b);
+    }
+  } else {
+    fill($("legend-scatter"), state.scatterView === "leaders" ? GROUPS.slice(0, 3) : GROUPS, false);
+  }
   const diag = document.createElement("span");
   diag.innerHTML = `<svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="${css("--text-muted")}" stroke-width="1"/></svg>`;
   diag.append("Frontier (y = x)");
@@ -528,7 +563,7 @@ function renderLabs() {
   const surface = css("--surface"), ring = css("--text-muted");
   const traces = [];
   if (state.ci) {
-    // 90% interval for each clock reading, as a soft band behind the dot.
+    // 90% interval for each frontier-equivalent date, as a soft band behind the dot.
     for (const g of GROUPS) {
       const xs = [], ys = [];
       for (const r of rows) {
@@ -538,7 +573,7 @@ function renderLabs() {
       if (xs.length) traces.push({ x: xs, y: ys, mode: "lines", line: { color: css(g.color), width: 7 }, opacity: 0.18, hoverinfo: "skip" });
     }
   }
-  // Connector: release date -> clock reading.
+  // Connector: release date -> frontier-equivalent date.
   const cx = [], cy = [];
   for (const r of rows) cx.push(isoOf(r.t), isoOf(r.fdate), null), cy.push(r.model.name, r.model.name, null);
   traces.push({ x: cx, y: cy, mode: "lines", line: { color: css("--axis"), width: 2 }, hoverinfo: "skip" });
@@ -548,7 +583,7 @@ function renderLabs() {
     marker: { symbol: "circle-open", size: 9, color: ring, line: { width: 1.5 } },
     text: rows.map(hoverText), hovertemplate: "%{text}<extra></extra>",
   });
-  // Clock reading: filled, by group.
+  // Frontier-equivalent date: filled, by group.
   for (const g of GROUPS) {
     const mine = rows.filter((r) => groupMeta(r.model.group) === g);
     if (!mine.length) continue;
@@ -592,30 +627,40 @@ function renderScatter() {
     x: [isoOf(tMin), isoOf(tMax)], y: [isoOf(tMin), isoOf(tMax)],
     mode: "lines", line: { color: css("--text-muted"), width: 1 }, hoverinfo: "skip",
   }];
-  const leadersOnly = state.scatterView === "leaders";
+  // One series per group, or per lab in the "labs" view. Leader views connect each series'
+  // successive record-setters into a trend line; markers always take their group's shape.
+  const view = state.scatterView;
+  const series = view === "labs"
+    ? LABS.filter((l) => state.labsOn.has(l.key))
+      .map((l) => ({ color: css(l.color), rows: leaders(rows.filter((r) => labOf(r.model) === l.key)) }))
+    : (view === "leaders" ? GROUPS.slice(0, 3) : GROUPS).map((g) => {
+      const mine = rows.filter((r) => groupMeta(r.model.group) === g);
+      return { color: css(g.color), rows: view === "leaders" ? leaders(mine) : mine };
+    });
+  const withTrend = view !== "all";
   const shown = [];
-  for (const g of leadersOnly ? GROUPS.slice(0, 3) : GROUPS) {
-    const mine = leadersOnly ? groupLeaders(rows, g.key) : rows.filter((r) => groupMeta(r.model.group) === g);
+  for (const s of series) {
+    const mine = s.rows, color = s.color;
     if (!mine.length) continue;
     shown.push(...mine);
-    const color = css(g.color);
-    if (leadersOnly) {
-      // Trend line through the group's successive leaders.
+    if (withTrend) {
       traces.push({
         x: mine.map((r) => isoOf(r.t)), y: mine.map((r) => isoOf(r.fdate)),
         mode: "lines", line: { color, width: 2 }, opacity: 0.6, hoverinfo: "skip",
       });
     }
+    const symbols = mine.map((r) => groupMeta(r.model.group).symbol);
     const trace = {
       x: mine.map((r) => isoOf(r.t)), y: mine.map((r) => isoOf(r.fdate)),
-      mode: "markers", type: "scatter", name: g.key,
+      mode: "markers", type: "scatter",
       marker: {
-        color, symbol: g.symbol, size: mine.map((r) => (r.isRecord || leadersOnly ? 10 : 8)),
+        color, symbol: symbols, size: mine.map((r) => (r.isRecord || withTrend ? 10 : 8)),
         opacity: mine.map((r) => (r.flag ? 0.4 : 1)),
-        line: { color: g.symbol.endsWith("open") ? color : surface, width: g.symbol.endsWith("open") ? 1.5 : 1 },
+        line: { color: symbols.map((sym) => (sym.endsWith("open") ? color : surface)), width: symbols.map((sym) => (sym.endsWith("open") ? 1.5 : 1)) },
       },
       text: mine.map(hoverText), hovertemplate: "%{text}<extra></extra>",
     };
+    s.top = mine.reduce((a, b) => (b.fdate > a.fdate ? b : a));
     if (state.ci) {
       const ci = mine.map((r) => state.ci.dateCI.get(r.i));
       // Plotly error bars need numeric axes; draw intervals as thin vertical segments instead.
@@ -627,18 +672,15 @@ function renderScatter() {
   }
   // Direct labels for each group's most advanced model, set in a gutter to the right of
   // the newest release so they never sit on top of points. Nudged apart vertically.
+  // The lab view has none: its legend names the lines.
+  const labelled = view === "labs" ? [] : series.slice(0, 3).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
   const tMaxRel = Math.max(...rows.map((r) => r.t));
   const labelX = tMaxRel + 0.08;
   const yMax = Math.max(...rows.map((r) => r.fdate));
   const yMinT = Math.min(...rows.map((r) => r.fdate));
   const minGap = (yMax - yMinT) * 0.06;
-  const tops = GROUPS.slice(0, 3)
-    .map((g) => shown.filter((r) => r.model.group === g.key))
-    .filter((mine) => mine.length)
-    .map((mine) => mine.reduce((a, b) => (b.fdate > a.fdate ? b : a)))
-    .sort((a, b) => b.fdate - a.fdate);
   let prevY = Infinity;
-  const annotations = tops.map((top) => {
+  const annotations = labelled.map(({ top }) => {
     const ly = Math.min(top.fdate, prevY - minGap);
     prevY = ly;
     return {
@@ -649,7 +691,7 @@ function renderScatter() {
   });
   const yMin = isoOf(Math.min(...rows.map((r) => r.fdate)) - 0.12);
   Plotly.react("chart-scatter", traces, baseLayout({
-    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + 0.62)] },
+    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + (labelled.length ? 0.62 : 0.1))] },
     yaxis: { type: "date", title: { text: "Frontier-equivalent date" }, range: [yMin, isoOf(yMax + 0.15)] },
     annotations,
   }), plotConfig);
