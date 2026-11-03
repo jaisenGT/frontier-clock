@@ -67,6 +67,18 @@ async function main() {
   buildControls();
   recompute();
   renderHeadline();
+  // After a resize, redraw the charts that adapt to their width (labels, tick counts), then
+  // have Plotly re-measure every chart: a redraw alone keeps the old width.
+  let resizeTimer = null, lastWidth = window.innerWidth;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastWidth) return; // ignore mobile address-bar height changes
+    lastWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (state.result) { renderScatter(); renderLabs(); }
+      document.querySelectorAll(".chart").forEach((el) => Plotly.Plots.resize(el));
+    }, 150);
+  });
 }
 
 // Hero headline: today's gaps under the default settings, independent of the controls.
@@ -604,7 +616,10 @@ function renderLabs() {
       text: mine.map(hoverText), hovertemplate: "%{text}<extra></extra>",
     });
   }
-  const narrow = $("chart-labs").clientWidth < 600;
+  const width = $("chart-labs").clientWidth, narrow = width < 600;
+  // Ticks from the plotting width: the model names on the left take a good share of it.
+  const plotWidth = width - Math.max(...names.map((n) => n.length)) * 6.6 - 24;
+  const nticks = Math.max(2, Math.min(10, Math.round(plotWidth / 90)));
   // Lag in months beside each row (0.0 for models that were the frontier at release).
   const annotations = rows.map((r) => ({
     x: isoOf(r.t), y: r.model.name, xanchor: "left", xshift: 9, showarrow: false,
@@ -615,7 +630,7 @@ function renderLabs() {
   const t0 = Math.min(...rows.map((r) => Math.min(r.t, r.fdate))), t1 = Math.max(...rows.map((r) => r.t));
   Plotly.react(el, traces, baseLayout({
     margin: { l: 8, r: 16, t: 8, b: 40 },
-    xaxis: { type: "date", side: "bottom", range: [isoOf(t0 - 0.1), isoOf(t1 + (narrow ? 0.4 : 0.32))], nticks: narrow ? 4 : 10, tickangle: 0 },
+    xaxis: { type: "date", side: "bottom", range: [isoOf(t0 - 0.1), isoOf(t1 + (narrow ? 0.4 : 0.32))], nticks, tickangle: 0 },
     yaxis: { type: "category", categoryorder: "array", categoryarray: names, autorange: "reversed", showgrid: false, ticks: "", tickfont: { size: 12, color: css("--text-secondary") } },
     hovermode: "closest",
     annotations,
@@ -684,8 +699,9 @@ function renderScatter() {
   // Direct labels for each group's most advanced model, set in a gutter to the right of
   // the newest release so they never sit on top of points. Nudged apart vertically.
   // The lab view has none (its legend names the lines) but keeps the gutter, so the axes
-  // don't shift when switching views.
-  const labelled = view === "labs" ? [] : series.slice(0, 3).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
+  // don't shift when switching views. Narrow screens have no room for them: no labels, no gutter.
+  const narrow = $("chart-scatter").clientWidth < 720;
+  const labelled = view === "labs" || narrow ? [] : series.slice(0, 3).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
   const tMaxRel = Math.max(...rows.map((r) => r.t));
   const labelX = tMaxRel + 0.08;
   const yMax = Math.max(...rows.map((r) => r.fdate));
@@ -703,7 +719,7 @@ function renderScatter() {
   });
   const yMin = isoOf(Math.min(...rows.map((r) => r.fdate)) - 0.12);
   Plotly.react("chart-scatter", traces, baseLayout({
-    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + 0.62)] },
+    xaxis: { type: "date", title: { text: "Release date" }, range: [isoOf(Math.min(...rows.map((r) => r.t)) - 0.1), isoOf(tMaxRel + (narrow ? 0.1 : 0.62))] },
     yaxis: { type: "date", title: { text: "Frontier-equivalent date" }, range: [yMin, isoOf(yMax + 0.15)] },
     annotations,
   }), plotConfig);

@@ -239,8 +239,12 @@ td.reading-cell { font-weight: 600; color: var(--text-primary); }
   .hero-stats .value { font-size: 32px; }
   .br-wide { display: none; }
   .controlbar { position: static; }
+  /* Controls as a grid: benchmarks full width; curve and min. benchmarks side by side; switch below. */
+  .controlbar-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; align-items: start; }
+  #domain-dd { grid-column: 1 / -1; }
+  .dd-btn { min-width: 0; width: 100%; }
   .control { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .dd-btn { min-width: 0; }
+  .control.switch { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; }
   section[id] { scroll-margin-top: 64px; }
   .chart { height: 340px; }
   .chart-tall { height: 400px; }
