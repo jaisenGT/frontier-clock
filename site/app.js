@@ -56,7 +56,11 @@ const flagMark = (f) => (f ? "*" : "");
 async function main() {
   const resp = await fetch("data/frontier_clock.json");
   state.data = await resp.json();
-  state.data.models.forEach((m) => (m._t = toYear(m.date)));
+  state.data.models.forEach((m) => {
+    m._t = toYear(m.date);
+    // Epoch sometimes lists aliases of one lab ("Google DeepMind,Google"); show the lab once.
+    m.org = [...new Set(m.org.split(",").map((o) => LAB_ALIASES[o.trim()] ?? o.trim()).filter(Boolean))].join(", ");
+  });
   state.data.benchmarks.forEach((_, i) => state.selected.add(i));
   $("credit").textContent = state.data.retrieved ? `Data retrieved ${state.data.retrieved}.` : "";
   buildControls();
