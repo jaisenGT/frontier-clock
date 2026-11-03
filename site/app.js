@@ -114,6 +114,9 @@ async function renderHeadline() {
 
 // ---------- controls ----------
 
+// Display names for domains whose data key reads poorly (keys stay as-is for intervals.json).
+const DOMAIN_LABELS = { Unclassified: "Other (unclassified)" };
+const domainLabel = (d) => DOMAIN_LABELS[d] ?? d;
 const domainIds = (d) => state.data.benchmarks.map((b, i) => (b.domain === d ? i : -1)).filter((i) => i >= 0);
 const CHEVRON = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -138,7 +141,7 @@ function buildControls() {
       settingsChanged();
     });
     const name = document.createElement("span");
-    name.textContent = d;
+    name.textContent = domainLabel(d);
     const n = document.createElement("span");
     n.className = "n";
     n.textContent = ids.length;
@@ -147,7 +150,7 @@ function buildControls() {
     exp.type = "button";
     exp.className = "dd-expand";
     exp.setAttribute("aria-expanded", "false");
-    exp.setAttribute("aria-label", `Show ${d} benchmarks`);
+    exp.setAttribute("aria-label", `Show ${domainLabel(d)} benchmarks`);
     exp.innerHTML = CHEVRON;
     const benches = document.createElement("div");
     benches.className = "dd-benches";
@@ -247,11 +250,11 @@ function selectionSummary() {
   const { data, selected } = state;
   const key = selectionKey();
   if (key === "all") return "All benchmarks";
-  if (key) return key;
+  if (key) return domainLabel(key);
   if (!selected.size) return "None selected";
   const full = data.domains.filter((d) => { const ids = domainIds(d); return ids.length && ids.every((i) => selected.has(i)); });
   const coversExactly = full.reduce((n, d) => n + domainIds(d).length, 0) === selected.size;
-  if (coversExactly && full.length <= 2) return full.join(" + ");
+  if (coversExactly && full.length <= 2) return full.map(domainLabel).join(" + ");
   if (coversExactly) return `${full.length} domains`;
   return `Custom · ${selected.size} benchmarks`;
 }
