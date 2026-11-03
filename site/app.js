@@ -27,11 +27,6 @@ const LABS = [
 // Frontier curves offered on the site (core.js also has "linear" and "broken", kept for the CLI).
 const MODE_SHORT = { step: "Running max", interp: "Interpolated" };
 
-const MODE_HELP = {
-  step: "Running max: a model's date is when a released model first matched it. Faithful to the data but lumpy: dates jump between record releases.",
-  interp: "Interpolated records: assumes capability rose steadily between record releases. Smooth inside the observed range; extrapolates at the edges with the overall trend.",
-};
-
 const state = {
   data: null,
   selected: new Set(),
@@ -280,7 +275,7 @@ function syncControls() {
     labs: "Each point is a model that has a higher score than every earlier model from the same lab.",
     all: "Each point represents a model.",
   }[state.scatterView] + diagonal;
-  $("mode-help").textContent = `The black line is the frontier. A model's frontier-equivalent date is when that line reached the model's capability. ${MODE_HELP[state.mode]}`;
+  $("mode-help").textContent = "Each point represents a specific model. The X-value is when that model was released, and the Y-value is the ECI score of that model. The black line is the frontier.";
   $("lag-desc").textContent = state.lagUnit === "months"
     ? "This graph visualizes the gap between the frontier, China, and non-China open weights, measured in time. Each point represents how many months earlier the frontier reached the same capabilities level as the best model available from that group at that moment in time."
     : "This graph visualizes the gap between the frontier, China, and non-China open weights, measured in ECI points (Claude 3.5 Sonnet = 130, GPT-5 = 150). Each point represents how many ECI points higher the frontier was than the best model available from that group at that moment in time.";
