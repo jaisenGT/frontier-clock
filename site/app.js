@@ -96,7 +96,7 @@ async function renderHeadline() {
   const run = (await loadIntervals())?.runs[`all|${mode}|${minBench}`];
   for (const { g, T, el: best } of ciSlots) {
     const pt = run?.lags[g]?.at(-1);
-    if (pt && Math.abs(toYear(pt[0]) - T) < 0.01) best.textContent += `, 90% interval: ${pt[1].toFixed(1)}–${pt[2].toFixed(1)} months`;
+    if (pt && Math.abs(toYear(pt[0]) - T) < 0.01) best.textContent += ` · 90% CI ${pt[1].toFixed(1)}–${pt[2].toFixed(1)} mo`;
   }
 }
 
