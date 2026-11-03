@@ -19,6 +19,7 @@ All analysis lives in [site/core.js](site/core.js), a dependency-free ES module 
 
 | Path | What |
 |---|---|
+| `scripts/serve.py` | Local server with caching disabled, for development |
 | `scripts/build_data.py` | Downloads Epoch's `benchmark_data.zip` and writes `site/data/frontier_clock.json` |
 | `data/domains.json` | Benchmark → domain mapping (hand-assigned, edit freely) |
 | `data/model_overrides.json` | Fills in missing org/country/accessibility in Epoch's data |
@@ -35,7 +36,7 @@ python scripts/build_data.py            # or --offline to rebuild from data/raw/
 node cli/precompute_intervals.mjs       # 90% intervals for standard selections, 1,000 resamples (~15 min)
 
 # view the site
-cd site && python -m http.server 8765   # open http://localhost:8765
+python scripts/serve.py                 # open http://localhost:8765 (no caching)
 
 # command line
 node cli/analyze.mjs --validate                          # compare with Epoch ECI
