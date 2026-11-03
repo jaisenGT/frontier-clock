@@ -273,11 +273,13 @@ function syncControls() {
   document.querySelectorAll("#mode-seg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === state.mode));
   document.querySelectorAll("#lag-unit button").forEach((b) => b.setAttribute("aria-checked", b.dataset.unit === state.lagUnit));
   document.querySelectorAll("#scatter-view button").forEach((b) => b.setAttribute("aria-checked", b.dataset.view === state.scatterView));
-  $("scatter-desc").textContent = "A model's frontier-equivalent date is when the frontier first reached its capability: a model as good as the best model of March 2025 reads Mar 2025, no matter when it was released. " + {
-    leaders: "Each point is a model that beat every earlier model from its group, connected to show each group's trend. The gap between the lines is charted below.",
-    labs: "Each point is a model that beat every earlier model from its lab, connected to show each lab's trend. Marker shape shows the group. Click a lab to show or hide it.",
-    all: "Models on the diagonal were the frontier when they launched. The vertical drop below it is how far behind they were on release day.",
-  }[state.scatterView];
+  const diagonal = " Each model along the diagonal was the world’s best model when it launched. The vertical gap between a model and the diagonal is how far behind that model was when it was released.";
+  $("scatter-desc").textContent = "A model's frontier-equivalent date is the date when the frontier of AI models first reached that model’s capability. " +
+    "For example, a model that reads “Mar 2025” was as good as the best model of March 2025, no matter when it was released. " + {
+    leaders: "Each point is a model that has a higher score than every earlier model from its group.",
+    labs: "Each point is a model that has a higher score than every earlier model from the same lab.",
+    all: "Each point represents a model.",
+  }[state.scatterView] + diagonal;
   $("mode-help").textContent = `The black line is the frontier. A model's frontier-equivalent date is when that line reached the model's capability. ${MODE_HELP[state.mode]}`;
   $("lag-desc").textContent = state.lagUnit === "months"
     ? "Each month: how much earlier the frontier reached the best model available from each group, compared with the best model available overall."
