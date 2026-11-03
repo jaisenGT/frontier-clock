@@ -636,7 +636,7 @@ function renderLabs() {
     annotations,
   }), plotConfig);
   const count = new Set(rows.map((r) => labOf(r.model))).size;
-  $("labs-count").textContent = `${rows.length} models from ${count} labs`;
+  $("labs-count").textContent = count;
 }
 
 function escapeHtml(s) {
