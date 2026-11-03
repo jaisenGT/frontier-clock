@@ -38,6 +38,9 @@ node cli/precompute_intervals.mjs       # 90% intervals for standard selections,
 # view the site
 python scripts/serve.py                 # open http://localhost:8765 (no caching)
 
+# link-preview image (after a data refresh): with the server running, screenshot the card page at 1200x630
+chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630   --virtual-time-budget=15000 --screenshot=site/og.png http://localhost:8765/og-card.html
+
 # command line
 node cli/analyze.mjs --validate                          # compare with Epoch ECI
 node cli/analyze.mjs --mode broken --domain "Math" --top 20
