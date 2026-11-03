@@ -66,6 +66,10 @@ Most important first. Keep these in mind before quoting any number.
 
 Epoch AI, "Capabilities & benchmarking", https://epoch.ai/benchmarks, licensed CC BY 4.0. Underlying external benchmark results keep their original licenses.
 
+## Contact
+
+Questions, feedback or corrections: jaisen9911@gmail.com, or open an issue on GitHub.
+
 ## License
 
 Code: [MIT](LICENSE). Data: Epoch AI's benchmark data, CC BY 4.0 (see [Data](#data)); the generated files in `site/data/` are derived from it and keep that license.
