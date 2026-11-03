@@ -282,8 +282,8 @@ function syncControls() {
   }[state.scatterView] + diagonal;
   $("mode-help").textContent = `The black line is the frontier. A model's frontier-equivalent date is when that line reached the model's capability. ${MODE_HELP[state.mode]}`;
   $("lag-desc").textContent = state.lagUnit === "months"
-    ? "Each month: how much earlier the frontier reached the best model available from each group, compared with the best model available overall."
-    : "Each month: capability of the best model overall minus the best model from each group, in ECI points (Claude 3.5 Sonnet = 130, GPT-5 = 150). Unlike months, this unit doesn't depend on how fast the frontier is moving.";
+    ? "This graph visualizes the gap between the frontier, China, and non-China open weights, measured in time. Each point represents how many months earlier the frontier reached the same capabilities level as the best model available from that group at that moment in time."
+    : "This graph visualizes the gap between the frontier, China, and non-China open weights, measured in ECI points (Claude 3.5 Sonnet = 130, GPT-5 = 150). Each point represents how many ECI points higher the frontier was than the best model available from that group at that moment in time.";
 }
 
 let recomputeTimer = null;
