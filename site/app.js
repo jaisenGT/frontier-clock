@@ -88,6 +88,10 @@ async function renderHeadline() {
   if (!res.frontier) return;
   const grid = monthlyGrid(toYear(data.frontierStart ?? data.models[0].date), Math.max(...res.rows.map((r) => r.t)));
   const lags = groupLags(res.rows, LAG_GROUPS, grid);
+  // Coverage counts in the Method section: the full dataset, whatever the selection.
+  $("cov-models").textContent = res.rows.filter((r) => !isBeforeCoverage(r)).length;
+  $("cov-benches").textContent = data.benchmarks.length;
+  $("cov-scores").textContent = res.fit.nObs.toLocaleString("en-US");
   const el = $("hero-stats");
   const div = (cls, text) => { const e = document.createElement("div"); e.className = cls; if (text != null) e.textContent = text; return e; };
   el.replaceChildren();
@@ -421,7 +425,6 @@ function pearson(x, y) {
 // ---------- rendering ----------
 
 function renderAll() {
-  renderTiles();
   renderCharts();
   renderTable();
 }
@@ -812,16 +815,6 @@ function renderFrontier() {
 function hexA(hex, a) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
-function renderTiles() {
-  const res = state.result;
-  if (!res) return;
-  const hidden = res.rows.length - shownRows().length;
-  $("coverage").textContent = `Epoch's data starts in early 2023 without that era's frontier models, so GPT-4 (Mar 2023) is the first frontier record. ` +
-    `Models weaker than GPT-4 can't be dated within the data and are left out, along with benchmarks that only scored them. ` +
-    `This selection places ${shownRows().length} models using ${state.selected.size} benchmarks (${res.fit.nObs} scores)` +
-    (hidden ? `; ${hidden} more fall below GPT-4 on these benchmarks and are hidden.` : ".");
 }
 
 function renderTable() {

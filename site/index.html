@@ -156,49 +156,59 @@
     <section id="method" class="section prose">
       <h2>Method</h2>
       <ol>
-        <li><strong>Capability.</strong> For the selected benchmarks we fit an item-response model following the method of
-          <a href="https://epoch.ai/benchmarks/eci" target="_blank" rel="noopener">Epoch AI's Capabilities Index (ECI)</a>:
-          score ≈ sigmoid(a<sub>b</sub>·(C<sub>m</sub> − D<sub>b</sub>)), with a capability C per model and a
-          difficulty D and slope a per benchmark. This puts models evaluated on different benchmarks on one scale.</li>
-        <li><strong>ECI-scaled capability.</strong> Capabilities are shown on the ECI scale. With all benchmarks we pin the same
-          two reference models Epoch uses (Claude 3.5 Sonnet = 130, GPT-5 = 150); our scores then match Epoch's published ECI
-          with <span id="eci-corr">r ≈ 0.997</span>, typically within about a point. For a subset of benchmarks we rescale
-          to match the all-benchmarks scores of the same models, so every selection uses the same points.
-          These are our own fits, not Epoch's official ECI values, and will differ from them for domain subsets.</li>
-        <li><strong>Frontier.</strong> A model is a frontier record if, at release, it was more capable than every model released before it.
-          The frontier function F(t) is built from those records, either as a running max (a staircase) or by interpolating between records.</li>
-        <li><strong>Frontier-equivalent date.</strong> A model's score is F<sup>−1</sup>(C): the date the frontier first reached its capability.</li>
-        <li><strong>Gap.</strong> At each month, we compare the best model available from each group with the best available overall.</li>
-        <li><strong>90% intervals.</strong> Each resample makes as many random draws as there are selected benchmarks (currently 47
-          for all benchmarks), with replacement, so a benchmark can count twice or drop out; any one benchmark is left out about a third of
-          the time. The same draws apply to every model. We refit everything on each resample, repeat, and take the 5th–95th percentiles.
-          Benchmark scores themselves are fixed; the intervals show how much the results depend on which benchmarks are included.
-          All benchmarks and each single domain use 1,000 precomputed resamples; any other selection runs 100 resamples in your
-          browser, so its interval ends are less precise (about ±0.3 months). With all benchmarks, Claude 3.5 Sonnet and GPT-5 are pinned
-          to 130 and 150 in every refit, so they have no capability interval and models near them have narrow ones. For a benchmark
-          subset, each refit is rescaled to the all-benchmarks scores, which removes uncertainty about the scale itself, so
-          subset capability intervals look narrower than they are. Dates don't depend on the scale and aren't affected.</li>
-        <li><strong>Coverage.</strong> <span id="coverage"></span></li>
+        <li><strong>Capability.</strong> Different models are evaluated on different benchmarks. Thus, raw scores cannot be directly compared between models.
+          Following <a href="https://epoch.ai/benchmarks/eci" target="_blank" rel="noopener">Epoch AI's Capabilities Index (ECI)</a>,
+          we give each model a single capability score and each benchmark a difficulty. These values are chosen such that models score well
+          on benchmarks easier than their capability and poorly on harder ones. This puts every model on one scale since benchmarks overlap
+          between models. (Formally, score ≈ sigmoid(a<sub>b</sub>·(C<sub>m</sub> − D<sub>b</sub>)), with a capability C per model and a
+          difficulty D and slope a per benchmark.)</li>
+        <li><strong>ECI-scaled capability.</strong> Capabilities are measured on Epoch AI’s ECI scale. For all benchmarks, Claude 3.5 Sonnet’s
+          score is pinned at 130 and GPT-5’s score is pinned at 150. Epoch pins these two models here as well. As a result, our values match Epoch’s
+          published ECI with <span id="eci-corr">r = 0.997</span>, typically within around a point. When displaying a subset of benchmarks,
+          we rescale scores linearly such that the mean and standard deviation match those of the all-benchmarks condition so that the units
+          are comparable. This rescaling is our own, not Epoch's official ECI methodology. Thus, our values will differ from theirs for
+          subsets of the benchmarks.</li>
+        <li><strong>Frontier.</strong> A model is considered at the frontier if, when it was released, it was the most capable model in the world according to Epoch's data.
+          The frontier function F(t) is built from these models either as a running max (like a staircase) or by interpolating between
+          successive frontier models.</li>
+        <li><strong>Frontier-equivalent date.</strong> A model's frontier-equivalent date is F<sup>−1</sup>(C): the date at which the frontier
+          first reached that model’s level of capability.</li>
+        <li><strong>Gap.</strong> For each month, we compare each group’s best model by that month with the frontier model.</li>
+        <li><strong>90% intervals.</strong> To calculate 90% confidence intervals, we produce many resamples. Each resample makes X random
+          draws among the benchmarks that are used, X being the number of benchmarks. In a resample, a benchmark can count multiple times or
+          not at all; any one benchmark is left out around a third of the time. Every model has the same draws. For each resample, all the
+          scores are refit. Then, the 5th and 95th percentile results across all resamples are taken for the intervals. The intervals ultimately indicate how
+          much the results depend on which benchmarks are used. The benchmark scores themselves are fixed. For the all-benchmarks condition
+          and for each individual domain, we precompute 90% intervals from 1,000 resamples. Any other selection (e.g. a combination of two
+          domains) computes 100 resamples in your browser; as a result, its
+          intervals are less precise (about ±0.3 months). For all benchmarks, Claude 3.5 Sonnet and GPT-5 are pinned to 130 and 150 in
+          every refit. Therefore, they have no capability interval, and models close to them in capabilities have small intervals. For each
+          benchmark subset, refits are rescaled to have the same mean and standard deviation as the all-benchmarks condition. This hides
+          uncertainty about how spread apart the scores are. Thus, benchmark subset capability intervals look narrower than they actually
+          are. Dates do not depend on the scale and are not affected.</li>
+        <li><strong>Coverage.</strong> GPT-4 (Mar 2023) is the first frontier model displayed. Models weaker than GPT-4 are left out since they cannot
+          be dated. Benchmarks that only scored these models are also left out. Frontier Clock incorporates
+          <span id="cov-models">180</span> models and <span id="cov-benches">47</span> benchmarks, totaling
+          <span id="cov-scores">2,237</span> individual benchmark scores.</li>
       </ol>
       <h3>Caveats</h3>
       <ul>
-        <li>Dates are of <em>public release</em>; labs often hold stronger models internally.</li>
-        <li>If frontier progress accelerates, a constant capability gap shows up as a shrinking gap in months. Switch the gap chart to capability units to check.</li>
-        <li>Scores come from Epoch's internal runs and external reports and inherit their elicitation, contamination and harness differences.</li>
-        <li>The gap lines for China and open weights start only once a group's best model passes GPT-4 (early 2025 and mid-2024). Before that they were more than a GPT-4 generation behind, which this data can't date.</li>
-        <li>Domain assignments are ours and editable in <code>data/domains.json</code>.</li>
+        <li>Dates are of public release; frontier labs often have models internally available before public release.</li>
+        <li>If AI progress accelerates, a constant capability gap shows up as a shrinking gap in months, potentially downplaying the rate of progress.</li>
+        <li>Raw benchmark scores are sourced from Epoch AI. Thus, Frontier Clock inherits any possible benchmark issues from Epoch such as potential contamination.</li>
+        <li>Only models at least as capable as GPT-4 (Mar 2023) are shown.</li>
       </ul>
       <h3>Related work</h3>
-      <p>Frontier Clock was inspired by Epoch AI's finding that
-        <a href="https://epoch.ai/data-insights/us-vs-china-eci" target="_blank" rel="noopener">Chinese AI models have lagged the US frontier by 7 months on average</a>
+      <p>Frontier Clock was inspired by Epoch AI's
+        <a href="https://epoch.ai/data-insights/us-vs-china-eci" target="_blank" rel="noopener">“Chinese AI models have lagged the US frontier by 7 months on average since 2023”</a>
         and by Parv Mahajan's <a href="https://mcnair.center/china/" target="_blank" rel="noopener">“The US-China AI gap is very uncertain”</a> (MCNAIR).
-        Both measure how far Chinese models trail the US frontier; Frontier Clock extends the idea to non-China open-weights models,
-        individual labs and benchmark domains.</p>
+        Both articles discuss the US-China AI capabilities gap. Frontier Clock further explores non-China open-weights models,
+        individual labs, and specific domains.</p>
       <h3>Data and attribution</h3>
-      <p>All benchmark scores come from <a href="https://epoch.ai/benchmarks" target="_blank" rel="noopener">Epoch AI, “Capabilities &amp; benchmarking”</a>,
-        used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Frontier Clock changes this data:
-        it refits capabilities with its own model and benchmark selection, leaves out models weaker than GPT-4 (Mar 2023) and
-        benchmarks that only scored them, fills in missing metadata, and assigns benchmarks to domains.
+      <p>Raw benchmark scores are sourced from <a href="https://epoch.ai/benchmarks" target="_blank" rel="noopener">Epoch AI, “Capabilities &amp; benchmarking”</a>
+        and used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+        Frontier Clock refits capabilities with its own model. It excludes models that are weaker than GPT-4 (Mar 2023) and
+        benchmarks that only scored such models. It also assigns benchmarks to domains and fills in missing metadata.
         Frontier Clock is independent and not affiliated with or endorsed by Epoch AI.</p>
       <p>Frontier Clock is open source on <a href="https://github.com/jaisenGT/frontier-clock" target="_blank" rel="noopener">GitHub</a>.</p>
       <p class="footnote" id="credit"></p>
