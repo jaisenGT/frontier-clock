@@ -230,7 +230,8 @@ td.reading-cell { font-weight: 600; color: var(--text-primary); }
   .grid-2 { grid-template-columns: 1fr; }
   .grid-2 > .section + .section { border-top: 1px solid var(--border); }
   /* Benchmarks dropdown on its own full-width row; the other controls wrap inline below it. */
-  .controlbar-inner { gap: 10px 16px; }
+  /* Two classes, so the small-screen .wrap padding reset can't zero the top and bottom. */
+  .controlbar .controlbar-inner { gap: 10px 16px; padding-top: 14px; padding-bottom: 14px; }
   #domain-dd { flex: 1 1 100%; }
   .dd-btn { min-width: 0; width: 100%; }
   .control { gap: 8px; }
@@ -244,6 +245,7 @@ td.reading-cell { font-weight: 600; color: var(--text-primary); }
   .hero-stats .value { font-size: 32px; }
   .br-wide { display: none; }
   .controlbar { position: static; }
+  .control:has(#mode-seg) { flex: 1 1 100%; } /* curve on its own row; min. benchmarks and CI pair up below */
   section[id] { scroll-margin-top: 64px; }
   .chart { height: 340px; }
   .chart-tall { height: 400px; }
