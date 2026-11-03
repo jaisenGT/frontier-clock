@@ -10,7 +10,8 @@ Scores AI models by **frontier-equivalent date**: the date at which a model woul
    - interpolated records (site default)
    - linear trend, and a two-segment "accelerating" trend (CLI only, for robustness checks)
 3. **Date.** A model's score is F⁻¹(C).
-4. **Gap.** Each month, compare the best available model per group (US closed, China, non-China open weights) with the best available overall. The gap is shown in months and in capability units.
+4. **Gap.** Compare the best available model per group (US closed, China, non-China open weights) with the best available overall. The gap is shown in months and in capability units. It can only change on a release date, so it is computed at every release date (plus the data's retrieval date) and drawn per day in between.
+   - *Why every release, not just record-setters:* in the main fit only record-setting models move the gap, but each bootstrap refit reshuffles close models, so a release that isn't a record in the main fit can be one in some resamples. Evaluating the intervals only at the main fit's record dates would miss those changes. `intervals.json` then keeps only the points where an interval changes, so this costs little space.
 5. **Uncertainty.** Resample benchmarks with replacement (bootstrap), refit, and take percentile intervals.
 
 All analysis lives in [site/core.js](site/core.js), a dependency-free ES module that runs in both the browser and Node.

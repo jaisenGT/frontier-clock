@@ -1,5 +1,5 @@
 import {
-  analyze, bootstrap, fitCapabilities, FRONTIER_MODES, fromYear, groupLags, monthlyGrid, toYear,
+  analyze, bootstrap, dailyGrid, fitCapabilities, FRONTIER_MODES, fromYear, groupLags, releaseGrid, toYear,
 } from "./core.js";
 
 const GROUPS = [
@@ -86,7 +86,7 @@ async function renderHeadline() {
   const mode = "interp", minBench = 2;
   const res = analyze(data, data.benchmarks.map((_, i) => i), mode, { minBenchmarks: minBench });
   if (!res.frontier) return;
-  const grid = monthlyGrid(toYear(data.frontierStart ?? data.models[0].date), Math.max(...res.rows.map((r) => r.t)));
+  const grid = releaseGrid(data);
   const lags = groupLags(res.rows, LAG_GROUPS, grid);
   // Coverage counts in the Method section: the full dataset, whatever the selection.
   $("cov-models").textContent = res.rows.filter((r) => !isBeforeCoverage(r)).length;
@@ -313,9 +313,11 @@ function recompute() {
   const res = analyze(state.data, ids, state.mode, { minBenchmarks: state.minBench, reference: full ? null : state.reference });
   state.result = res.frontier ? res : null;
   if (state.result) {
-    const tMax = Math.max(...res.rows.map((r) => r.t));
-    state.grid = monthlyGrid(toYear(state.data.frontierStart ?? state.data.models[0].date), tMax);
-    state.lags = groupLags(res.rows, LAG_GROUPS, state.grid);
+    // Gaps change only on release dates (state.grid, also used by the bootstrap);
+    // the line is drawn per day so hovering moves one day at a time.
+    state.grid = releaseGrid(state.data);
+    state.dayGrid ??= dailyGrid(state.data);
+    state.lags = groupLags(res.rows, LAG_GROUPS, state.dayGrid);
     if (ids.length === state.data.benchmarks.length) {
       const xs = [], ys = [];
       for (const r of res.rows) if (r.model.eci != null) { xs.push(r.c); ys.push(r.model.eci); }
@@ -737,6 +739,14 @@ function renderLag() {
   if (!res) return emptyChart("chart-lag", emptyMessage());
   const months = state.lagUnit === "months";
   const traces = [];
+  // Invisible first trace: names the frontier leader once, at the top of the hover box.
+  const leaders = new Map();
+  for (const g of LAG_GROUPS) for (const p of state.lags[g] ?? []) leaders.set(p.T, p.leader);
+  const lt = [...leaders.keys()].sort((a, b) => a - b);
+  traces.push({
+    x: lt.map(isoOf), y: lt.map(() => 0), mode: "lines", line: { width: 0, color: "rgba(0,0,0,0)" },
+    text: lt.map((T) => `Frontier: <b>${escapeHtml(leaders.get(T))}</b>`), hovertemplate: "%{text}<extra></extra>",
+  });
   for (const g of GROUPS.slice(0, 3)) {
     const series = state.lags[g.key];
     if (!series?.length) continue;
@@ -751,7 +761,7 @@ function renderLag() {
       x: series.map((p) => isoOf(p.T)),
       y: series.map((p) => (months ? p.lagMonths : p.capGap)),
       mode: "lines", line: { color, width: 2, shape: "hv" }, name: g.key,
-      text: series.map((p) => `<b>${months ? p.lagMonths.toFixed(1) + " months" : p.capGap.toFixed(1) + " " + capUnit().short}</b> · ${escapeHtml(g.key)}<br>best: ${escapeHtml(p.best)}<br>overall leader: ${escapeHtml(p.leader)}`),
+      text: series.map((p) => `<b>${months ? p.lagMonths.toFixed(1) + " months" : p.capGap.toFixed(1) + " " + capUnit().short}</b> · ${escapeHtml(g.key)}<br>best: ${escapeHtml(p.best)}`),
       hovertemplate: "%{text}<extra></extra>",
     });
   }

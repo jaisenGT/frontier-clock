@@ -416,6 +416,34 @@ export function groupLags(rows, groups, grid) {
   return out;
 }
 
+/**
+ * Times at which the gaps can change: every release date from the frontier start on,
+ * plus the date the data was retrieved, so the latest gap runs up to "now".
+ * Built from all models, so every benchmark selection (and the precomputed
+ * intervals) shares the same grid.
+ * Every release, not just record-setters: in a bootstrap refit, close models can swap
+ * places, so a release that sets no record in the main fit can still move a group's
+ * gap in some resamples. Skipping it would put interval changes on the wrong dates.
+ */
+export function releaseGrid(data) {
+  const t0 = toYear(data.frontierStart ?? data.models[0].date);
+  const ts = new Set(data.models.map((m) => toYear(m.date)).filter((t) => t >= t0));
+  if (data.retrieved) ts.add(Math.max(toYear(data.retrieved), ...ts));
+  return [...ts].sort((a, b) => a - b);
+}
+
+/**
+ * Every day over the release grid's span, for drawing and hovering. Gaps only change on
+ * release dates, so this is the release grid with the days in between filled in.
+ */
+export function dailyGrid(data) {
+  const g = releaseGrid(data);
+  const out = [];
+  for (let d = Date.parse(fromYear(g[0])); d <= Date.parse(fromYear(g.at(-1))); d += 864e5)
+    out.push(toYear(new Date(d).toISOString().slice(0, 10)));
+  return out;
+}
+
 export function monthlyGrid(t0, t1) {
   const grid = [];
   const start = new Date((t0 - 1970) * MS_PER_YEAR);

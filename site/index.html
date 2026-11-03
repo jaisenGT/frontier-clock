@@ -184,7 +184,7 @@
           successive frontier models.</li>
         <li><strong>Frontier-equivalent date.</strong> A model's frontier-equivalent date is F<sup>−1</sup>(C): the date at which the frontier
           first reached that model’s level of capability.</li>
-        <li><strong>Gap.</strong> For each month, we compare each group’s best model by that month with the frontier model.</li>
+        <li><strong>Gap.</strong> On each model release date, we compare each group’s best model by that date with the frontier model.</li>
         <li><strong>90% intervals.</strong> To calculate 90% confidence intervals, we produce many resamples. Each resample makes X random
           draws among the benchmarks that are used, X being the number of benchmarks. In a resample, a benchmark can count multiple times or
           not at all; any one benchmark is left out around a third of the time. Every model has the same draws. For each resample, all the
@@ -204,6 +204,7 @@
       </ol>
       <h3>Caveats</h3>
       <ul>
+        <li>Model development can be very unpredictable. Measurements regarding how many months a certain group is behind reflect which benchmarks are included and may not be accurate. The actual gap may fall outside the 90% confidence intervals.</li>
         <li>Dates are of public release; frontier labs often have models internally available before public release.</li>
         <li>If AI progress accelerates, a constant capability gap shows up as a shrinking gap in months, potentially downplaying the rate of progress.</li>
         <li>Raw benchmark scores are sourced from Epoch AI. Thus, Frontier Clock inherits any possible benchmark issues from Epoch such as potential contamination.</li>

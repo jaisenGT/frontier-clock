@@ -51,7 +51,7 @@
     </div>
   </div>
   <script type="module">
-    import { analyze, groupLags, monthlyGrid, toYear } from "./core.js";
+    import { analyze, groupLags, releaseGrid, toYear } from "./core.js";
 
     const GROUPS = [
       { key: "China", label: "China", lead: "China is behind by", color: "--china" },
@@ -64,7 +64,7 @@
     const data = await (await fetch("data/frontier_clock.json")).json();
     data.models.forEach((m) => (m._t = toYear(m.date)));
     const res = analyze(data, data.benchmarks.map((_, i) => i), "interp", { minBenchmarks: 2 });
-    const grid = monthlyGrid(toYear(data.frontierStart), Math.max(...res.rows.map((r) => r.t)));
+    const grid = releaseGrid(data);
     const lags = groupLags(res.rows, GROUPS.map((g) => g.key), grid);
     const iv = await (await fetch("data/intervals.json")).json();
     const run = iv.version === data.version ? iv.runs["all|interp|2"] : null;
@@ -81,7 +81,7 @@
       el.querySelector(".ci").textContent = ci ? `90% CI ${ci[1].toFixed(1)}–${ci[2].toFixed(1)} months` : "";
       stats.append(el);
     }
-    const asOf = new Date((grid.at(-1) - 1970) * 365.25 * 864e5).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+    const asOf = new Date((grid.at(-1) - 1970) * 365.25 * 864e5).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
     document.getElementById("sub").textContent = `Best model from each group vs. best overall, to ${asOf}`;
 
     const traces = [], annotations = [];
