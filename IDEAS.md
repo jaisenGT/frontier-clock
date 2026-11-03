@@ -19,10 +19,10 @@ Benchmark one open-weights family at several standardized sizes (e.g. X, 5X and 
 
 Also useful for safety arguments: it estimates how quickly a given capability level becomes reachable at smaller scale, which bears on proliferation.
 
-Open questions: which families have clean ladders (Qwen, Llama and Gemma have several sizes, but recipes differ between sizes), and whether Epoch has scored enough sizes or we need our own runs.
+**Deprioritized (Nov 2026).** Checked against the data, the ladders are too confounded to show a clean trend:
 
-## 3. Per-lab frontier trends ✅ (scatter chart)
+- **Distillation flattens them.** Qwen3 8B → 235B (~30× parameters) gains only ~3 ECI points (136.1 → 139.1), against ~16 points/year of frontier progress; small siblings likely learn from the big model's outputs.
+- **Mixture-of-experts parameters are ambiguous.** gpt-oss-120b has 6× the total parameters of gpt-oss-20b but only ~1.4× the active ones. Training compute would be the better unit.
+- **Few usable ladders.** Qwen3, Qwen3.5 (9B → 397B-A17B), Llama 3.1 (70B, 405B only) and gpt-oss (20b, 120b). Clean research ladders (e.g. OLMo) mostly fall below the GPT-4 floor and can't be dated.
 
-**Done:** the "Frontier-equivalent date vs. release date" chart has a **By lab** view: each lab's successive record-setting models joined into a trend line, so you can see which labs lead or trail one another. Labs can be toggled from the legend. Eight labs fit the categorical palette (OpenAI, Anthropic, Google DeepMind, xAI, Meta AI, DeepSeek, Alibaba, Moonshot); Z.ai and Mistral are left out.
-
-**Not done:** the same per-lab breakdown for the "Gap to the frontier" chart. Awkward because the leading lab sits at zero and lab lines would overlap heavily; consider small multiples or a "best lab per group" variant instead.
+If revisited: plot frontier-equivalent date against training compute for all open-weights models instead of within families.
