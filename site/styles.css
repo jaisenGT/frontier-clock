@@ -229,6 +229,11 @@ td.reading-cell { font-weight: 600; color: var(--text-primary); }
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .grid-2 { grid-template-columns: 1fr; }
   .grid-2 > .section + .section { border-top: 1px solid var(--border); }
+  /* Benchmarks dropdown on its own full-width row; the other controls wrap inline below it. */
+  .controlbar-inner { gap: 10px 16px; }
+  #domain-dd { flex: 1 1 100%; }
+  .dd-btn { min-width: 0; width: 100%; }
+  .control { gap: 8px; }
 }
 @media (max-width: 640px) {
   .head-row { flex-wrap: wrap; }
@@ -239,12 +244,6 @@ td.reading-cell { font-weight: 600; color: var(--text-primary); }
   .hero-stats .value { font-size: 32px; }
   .br-wide { display: none; }
   .controlbar { position: static; }
-  /* Controls as a grid: benchmarks full width; curve and min. benchmarks side by side; switch below. */
-  .controlbar-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; align-items: start; }
-  #domain-dd { grid-column: 1 / -1; }
-  .dd-btn { min-width: 0; width: 100%; }
-  .control { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .control.switch { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; }
   section[id] { scroll-margin-top: 64px; }
   .chart { height: 340px; }
   .chart-tall { height: 400px; }
