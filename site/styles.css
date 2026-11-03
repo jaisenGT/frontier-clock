@@ -198,10 +198,7 @@ main.wrap { padding-top: 40px; padding-bottom: 64px; }
 .hero-stats .item { border-left: 3px solid; padding: 2px 0 2px 16px; }
 .hero-stats .lead { font-size: 14px; color: var(--text-secondary); }
 .hero-stats .value { font-size: 40px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.hero-stats .muted { font-size: 12px; color: var(--text-muted); }
-.hero-stats .ci { font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; margin-top: 2px; }
-.hero-stats .ci:empty { display: none; }
-.key-line { display: inline-block; width: 14px; height: 3px; border-radius: 2px; flex: none; align-self: center; }
+.hero-stats .muted { font-size: 12px; color: var(--text-muted); }.key-line { display: inline-block; width: 14px; height: 3px; border-radius: 2px; flex: none; align-self: center; }
 
 /* ---------- table ---------- */
 

@@ -87,17 +87,16 @@ async function renderHeadline() {
     if (!p) continue;
     const item = div("item");
     item.style.borderColor = css(g.color);
-    const ci = div("ci");
-    ciSlots.push({ g: g.key, T: p.T, el: ci });
-    item.append(div("lead", LEADS[g.key] ?? `${g.key} is behind by`), div("value", `${p.lagMonths.toFixed(1)} months`),
-      ci, div("muted", `best: ${p.best}`));
+    const best = div("muted", `best: ${p.best}`);
+    ciSlots.push({ g: g.key, T: p.T, el: best });
+    item.append(div("lead", LEADS[g.key] ?? `${g.key} is behind by`), div("value", `${p.lagMonths.toFixed(1)} months`), best);
     el.append(item);
   }
-  // 90% interval under each number, from the precomputed default run.
+  // 90% interval after the best model's name, from the precomputed default run.
   const run = (await loadIntervals())?.runs[`all|${mode}|${minBench}`];
-  for (const { g, T, el: ci } of ciSlots) {
+  for (const { g, T, el: best } of ciSlots) {
     const pt = run?.lags[g]?.at(-1);
-    if (pt && Math.abs(toYear(pt[0]) - T) < 0.01) ci.textContent = `90% interval: ${pt[1].toFixed(1)}–${pt[2].toFixed(1)} months`;
+    if (pt && Math.abs(toYear(pt[0]) - T) < 0.01) best.textContent += `, 90% interval: ${pt[1].toFixed(1)}–${pt[2].toFixed(1)} months`;
   }
 }
 
