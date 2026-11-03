@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <style>.rim { stroke: #0b0b0b; } @media (prefers-color-scheme: dark) { .rim { stroke: #f0efec; } }</style>
+  <circle class="rim" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+  <path d="M12 6.5V12l3.75 2.5" fill="none" stroke="#6250d6" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

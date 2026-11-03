@@ -10,8 +10,11 @@ export function toYear(iso) {
   return 1970 + Date.UTC(y, m - 1, d) / MS_PER_YEAR;
 }
 
+// Rounded to the nearest day: floating-point error would otherwise land a whole date
+// just before midnight and print the previous day.
 export function fromYear(t) {
-  return new Date((t - 1970) * MS_PER_YEAR).toISOString().slice(0, 10);
+  const day = 864e5;
+  return new Date(Math.round(((t - 1970) * MS_PER_YEAR) / day) * day).toISOString().slice(0, 10);
 }
 
 // ---------- seeded RNG (for bootstrap) ----------

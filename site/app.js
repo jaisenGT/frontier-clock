@@ -53,7 +53,7 @@ const $ = (id) => document.getElementById(id);
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const groupMeta = (key) => GROUPS.find((g) => g.key === key) ?? GROUPS[3];
 const isoOf = (t) => fromYear(t);
-const monthLabel = (t) => new Date((t - 1970) * 365.25 * 864e5).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+const monthLabel = (t) => new Date(fromYear(t)).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
 const flagMark = (f) => (f ? "*" : "");
 
 // ---------- boot ----------
@@ -70,7 +70,7 @@ async function main() {
 }
 
 // Hero headline: today's gaps under the default settings, independent of the controls.
-function renderHeadline() {
+async function renderHeadline() {
   const { data } = state;
   const mode = "interp", minBench = 2;
   const res = analyze(data, data.benchmarks.map((_, i) => i), mode, { minBenchmarks: minBench });
@@ -81,14 +81,23 @@ function renderHeadline() {
   const div = (cls, text) => { const e = document.createElement("div"); e.className = cls; if (text != null) e.textContent = text; return e; };
   el.replaceChildren();
   const LEADS = { "China": "China is behind by", "Open weights (non-China)": "Non-China open weights are behind by" };
+  const ciSlots = [];
   for (const g of GROUPS.slice(1, 3)) {
     const p = lags[g.key]?.at(-1);
     if (!p) continue;
     const item = div("item");
     item.style.borderColor = css(g.color);
+    const ci = div("ci");
+    ciSlots.push({ g: g.key, T: p.T, el: ci });
     item.append(div("lead", LEADS[g.key] ?? `${g.key} is behind by`), div("value", `${p.lagMonths.toFixed(1)} months`),
-      div("muted", `best: ${p.best}`));
+      ci, div("muted", `best: ${p.best}`));
     el.append(item);
+  }
+  // 90% interval under each number, from the precomputed default run.
+  const run = (await loadIntervals())?.runs[`all|${mode}|${minBench}`];
+  for (const { g, T, el: ci } of ciSlots) {
+    const pt = run?.lags[g]?.at(-1);
+    if (pt && Math.abs(toYear(pt[0]) - T) < 0.01) ci.textContent = `90% interval: ${pt[1].toFixed(1)}–${pt[2].toFixed(1)} months`;
   }
 }
 
