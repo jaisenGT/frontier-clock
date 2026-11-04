@@ -11,18 +11,22 @@ const GROUPS = [
 const LAG_GROUPS = GROUPS.slice(0, 3).map((g) => g.key);
 
 // Labs offered in the "By lab" view. Each keeps a fixed color, so toggling others never
-// repaints it. Eight is the categorical palette's limit; these have the most frontier-level
-// models (Z.ai and Mistral, next in line, are left out).
+// repaints it. A lab's color is a shade of the group most of its models belong to, so blue
+// still reads as US closed; within a group, labs also differ by line pattern. (Labs do cross
+// groups, e.g. OpenAI's gpt-oss; the marker shape shows each model's own group.)
+// These have the most frontier-level models (Z.ai and Mistral, next in line, are left out).
 const LABS = [
-  { key: "OpenAI", color: "--lab-1" },
-  { key: "Anthropic", color: "--lab-2" },
-  { key: "Google DeepMind", color: "--lab-3" },
-  { key: "xAI", color: "--lab-4" },
-  { key: "Meta AI", color: "--lab-5" },
-  { key: "DeepSeek", color: "--lab-6" },
-  { key: "Alibaba", color: "--lab-7" },
-  { key: "Moonshot", color: "--lab-8" },
+  { key: "OpenAI", color: "--lab-1", dash: "solid" },
+  { key: "Anthropic", color: "--lab-2", dash: "dash" },
+  { key: "Google DeepMind", color: "--lab-3", dash: "solid" },
+  { key: "xAI", color: "--lab-4", dash: "dot" },
+  { key: "Meta AI", color: "--lab-5", dash: "solid" },
+  { key: "DeepSeek", color: "--lab-6", dash: "solid" },
+  { key: "Alibaba", color: "--lab-7", dash: "dash" },
+  { key: "Moonshot", color: "--lab-8", dash: "solid" },
 ];
+// SVG equivalents of Plotly's dash names, for the legend chips.
+const DASH_SVG = { solid: "", dash: "5 3", dot: "1.5 3" };
 
 // Frontier curves offered on the site (core.js also has "linear" and "broken", kept for the CLI).
 const MODE_SHORT = { step: "Running max", interp: "Interpolated" };
@@ -500,7 +504,7 @@ function renderLegends() {
       const b = document.createElement("button");
       b.type = "button";
       b.setAttribute("aria-pressed", String(state.labsOn.has(l.key)));
-      b.innerHTML = `<svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="${css(l.color)}" stroke-width="2" stroke-linecap="round"/></svg>`;
+      b.innerHTML = `<svg width="22" height="8"><line x1="1" y1="4" x2="21" y2="4" stroke="${css(l.color)}" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${DASH_SVG[l.dash]}"/></svg>`;
       b.append(l.key);
       b.addEventListener("click", () => {
         state.labsOn.has(l.key) ? state.labsOn.delete(l.key) : state.labsOn.add(l.key);
@@ -667,7 +671,7 @@ function renderScatter() {
   const view = state.scatterView;
   const series = view === "labs"
     ? LABS.filter((l) => state.labsOn.has(l.key))
-      .map((l) => ({ color: css(l.color), rows: leaders(rows.filter((r) => labOf(r.model) === l.key)) }))
+      .map((l) => ({ color: css(l.color), dash: l.dash, label: l.key, rows: leaders(rows.filter((r) => labOf(r.model) === l.key)) }))
     : (view === "leaders" ? GROUPS.slice(0, 3) : GROUPS).map((g) => {
       const mine = rows.filter((r) => groupMeta(r.model.group) === g);
       return { color: css(g.color), rows: view === "leaders" ? leaders(mine) : mine };
@@ -681,7 +685,7 @@ function renderScatter() {
     if (withTrend) {
       traces.push({
         x: mine.map((r) => isoOf(r.t)), y: mine.map((r) => isoOf(r.fdate)),
-        mode: "lines", line: { color, width: 2 }, opacity: 0.6, hoverinfo: "skip",
+        mode: "lines", line: { color, width: 2, dash: s.dash ?? "solid" }, opacity: view === "labs" ? 0.9 : 0.6, hoverinfo: "skip",
       });
     }
     const symbols = mine.map((r) => groupMeta(r.model.group).symbol);
@@ -705,25 +709,24 @@ function renderScatter() {
     }
     traces.push(trace);
   }
-  // Direct labels for each group's most advanced model, set in a gutter to the right of
-  // the newest release so they never sit on top of points. Nudged apart vertically.
-  // The lab view has none (its legend names the lines) but keeps the gutter, so the axes
-  // don't shift when switching views. Narrow screens have no room for them: no labels, no gutter.
+  // Direct labels for each group's most advanced model (each lab's name in the lab view), set
+  // in a gutter to the right of the newest release so they never sit on top of points.
+  // Nudged apart vertically. Narrow screens have no room for them: no labels, no gutter.
   const narrow = $("chart-scatter").clientWidth < 720;
-  const labelled = view === "labs" || narrow ? [] : series.slice(0, 3).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
+  const labelled = narrow ? [] : (view === "labs" ? series : series.slice(0, 3)).filter((s) => s.top).sort((a, b) => b.top.fdate - a.top.fdate);
   const tMaxRel = Math.max(...rows.map((r) => r.t));
   const labelX = tMaxRel + 0.08;
   const yMax = Math.max(...rows.map((r) => r.fdate));
   const yMinT = Math.min(...rows.map((r) => r.fdate));
   const minGap = (yMax - yMinT) * 0.06;
   let prevY = Infinity;
-  const annotations = labelled.map(({ top }) => {
+  const annotations = labelled.map(({ top, label, color }) => {
     const ly = Math.min(top.fdate, prevY - minGap);
     prevY = ly;
     return {
       x: isoOf(top.t), y: isoOf(top.fdate), ax: isoOf(labelX), ay: isoOf(ly), axref: "x", ayref: "y",
-      text: escapeHtml(top.model.name), xanchor: "left", showarrow: true, arrowhead: 0, arrowwidth: 1, standoff: 6,
-      arrowcolor: css("--axis"), font: { size: 11, color: css("--text-secondary") },
+      text: label ? `<b>${escapeHtml(label)}</b>` : escapeHtml(top.model.name), xanchor: "left", showarrow: true, arrowhead: 0, arrowwidth: 1, standoff: 6,
+      arrowcolor: label ? color : css("--axis"), font: { size: 11, color: label ? color : css("--text-secondary") },
     };
   });
   const yMin = isoOf(Math.min(...rows.map((r) => r.fdate)) - 0.12);

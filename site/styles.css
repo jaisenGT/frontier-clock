@@ -18,18 +18,18 @@
   --accent-wash: rgba(98, 80, 214, 0.10);
   --glow: rgba(98, 80, 214, 0.12);
   --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
+  --series-2: #c8423c;
+  --series-3: #2a9d9a;
   --series-other: #898781;
-  /* Categorical order for the per-lab view (validated on the adjacent pairlist, for lines). */
-  --lab-1: #2a78d6;
-  --lab-2: #eb6834;
-  --lab-3: #1baf7a;
-  --lab-4: #eda100;
-  --lab-5: #e87ba4;
-  --lab-6: #008300;
-  --lab-7: #6250d6;
-  --lab-8: #e34948;
+  /* Per-lab view: shades of the lab's group color (dark to light), told apart further by line pattern. */
+  --lab-1: #164d91;
+  --lab-2: #2a78d6;
+  --lab-3: #7aaeea;
+  --lab-4: #4f8fdc;
+  --lab-5: #2a9d9a;
+  --lab-6: #8f2a25;
+  --lab-7: #c8423c;
+  --lab-8: #e58a84;
   --frontier: #0b0b0b;
   --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 8px 24px rgba(11, 11, 11, 0.06);
 }
