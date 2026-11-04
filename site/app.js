@@ -539,7 +539,8 @@ function hoverText(r) {
   const ciTxt = ci ? `<br>90% interval: ${monthLabel(ci.lo)} – ${monthLabel(ci.hi)}` : "";
   const capTxt = `<br>Capability: ${r.c.toFixed(1)} ${capUnit().short}` + (capCi ? ` (90%: ${capCi.lo.toFixed(1)} – ${capCi.hi.toFixed(1)})` : "");
   const flag = r.flag ? `<br><i>${{ extrapolated: "extrapolated beyond observed records", above: "beyond the latest record", below: "below the earliest record" }[r.flag]}</i>` : "";
-  return `<b>${escapeHtml(r.model.name)}</b><br>${escapeHtml(r.model.org || "")}` +
+  const lab = r.model.org ? `${escapeHtml(r.model.org)} · ` : "";
+  return `<b>${escapeHtml(r.model.name)}</b><br>${lab}${escapeHtml(groupMeta(r.model.group).key)}` +
     `<br>Frontier-equivalent: <b>${monthLabel(r.fdate)}</b>${ciTxt}` +
     `<br>Released: ${monthLabel(r.t)} · ${(r.lagYears * 12).toFixed(1)} mo behind` + capTxt +
     `<br>${r.nBench} benchmarks${r.isRecord ? " · frontier record" : ""}${flag}`;
