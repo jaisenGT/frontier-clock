@@ -183,7 +183,11 @@
           The frontier function F(t) is built from these models either as a running max (like a staircase) or by interpolating between
           successive frontier models.</li>
         <li><strong>Frontier-equivalent date.</strong> A model's frontier-equivalent date is F<sup>−1</sup>(C): the date at which the frontier
-          first reached that model’s level of capability.</li>
+          first reached that model’s level of capability. With the “Running max” setting, the only possible frontier-equivalent dates are
+          the release dates of the frontier models. The frontier-equivalent date of each non-frontier model is the release date of the first
+          frontier model at least as capable as it. With the “Interpolated” setting, we make a piecewise function by connecting successive
+          frontier models by straight lines. Each model’s frontier-equivalent date is the date at which this piecewise function reaches that
+          model’s capability.</li>
         <li><strong>Gap.</strong> On each model release date, we compare each group’s best model by that date with the frontier model.</li>
         <li><strong>90% intervals.</strong> To calculate 90% confidence intervals, we produce many resamples. Each resample makes X random
           draws among the benchmarks that are used, X being the number of benchmarks. In a resample, a benchmark can count multiple times or
