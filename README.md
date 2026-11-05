@@ -12,6 +12,7 @@ Scores AI models by **frontier-equivalent date**: the date at which a model woul
 3. **Date.** A model's score is F⁻¹(C).
 4. **Gap.** Compare the best available model per group (US closed, China, non-China open weights) with the best available overall. The gap is shown in months and in capability units. It can only change on a release date, so it is computed at every release date (plus the data's retrieval date) and drawn per day in between.
    - *Why every release, not just record-setters:* in the main fit only record-setting models move the gap, but each bootstrap refit reshuffles close models, so a release that isn't a record in the main fit can be one in some resamples. Evaluating the intervals only at the main fit's record dates would miss those changes. `intervals.json` then keeps only the points where an interval changes, so this costs little space.
+   - *Trend:* a least-squares line through each non-leading group's gap, fitted per day (so each gap counts for as long as it lasted). Its 90% interval comes from refitting the line in every bootstrap resample; no R² or p-value, since daily (or per-release) points are far from independent.
 5. **Uncertainty.** Resample benchmarks with replacement (bootstrap), refit, and take percentile intervals.
 
 All analysis lives in [site/core.js](site/core.js), a dependency-free ES module that runs in both the browser and Node.

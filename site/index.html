@@ -115,7 +115,14 @@
         <div class="section-head">
           <h2>Gap to the frontier</h2>
           <p id="lag-desc"></p>
-          <div class="segmented seg-sm" id="lag-unit" role="radiogroup" aria-label="Gap units"></div>
+          <div class="lag-controls">
+            <div class="segmented" id="lag-unit" role="radiogroup" aria-label="Gap units"></div>
+            <label class="switch">
+              <input type="checkbox" id="trend-toggle" role="switch" checked>
+              <span class="track" aria-hidden="true"></span>
+              <span>Trend lines</span>
+            </label>
+          </div>
         </div>
         <div id="legend-lag" class="legend"></div>
         <div id="chart-lag" class="chart"></div>

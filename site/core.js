@@ -417,6 +417,28 @@ export function groupLags(rows, groups, grid) {
 }
 
 /**
+ * Straight-line trend of one group's gap: least squares over every day from the group's
+ * first point to the last, the gap holding its value between points (a step function,
+ * as drawn). Fitting per day rather than per point weights each gap by how long it lasted.
+ * Returns the slope per year and the line's ends, or null with too little data.
+ */
+export function gapTrend(pts, key, days) {
+  if (!pts?.length) return null;
+  let j = 0, n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (const d of days) {
+    if (d < pts[0].T) continue;
+    while (j + 1 < pts.length && pts[j + 1].T <= d) j++;
+    const y = pts[j][key];
+    n++; sx += d; sy += y; sxx += d * d; sxy += d * y;
+  }
+  const den = n * sxx - sx * sx;
+  if (n < 30 || !(den > 0)) return null;
+  const slope = (n * sxy - sx * sy) / den, intercept = (sy - slope * sx) / n;
+  const t0 = pts[0].T, t1 = days.at(-1);
+  return { slope, t0, t1, y0: intercept + slope * t0, y1: intercept + slope * t1 };
+}
+
+/**
  * Times at which the gaps can change: every release date from the frontier start on,
  * plus the date the data was retrieved, so the latest gap runs up to "now".
  * Built from all models, so every benchmark selection (and the precomputed
@@ -464,15 +486,17 @@ export function monthlyGrid(t0, t1) {
  * Calls onProgress(done, total) between replicates; yields to the event loop so
  * the page stays responsive.
  * Returns Maps modelIdx -> {lo, hi} for frontier dates (dateCI) and capabilities (capCI),
- * and per-group gap bands in months (lo, hi) and capability (capLo, capHi).
+ * per-group gap bands in months (lo, hi) and capability (capLo, capHi), and, given
+ * opts.days, intervals on each group's gap trend (trendCI, slopes per year, same fields).
  * Pass fitOpts.reference for a subset so every refit uses the base fit's scale.
  */
 export async function bootstrap(data, benchIds, mode, base, opts = {}) {
-  const { reps = 40, level = 0.9, seed = 1, groups = [], grid = [], onProgress, fitOpts = {} } = opts;
+  const { reps = 40, level = 0.9, seed = 1, groups = [], grid = [], days, onProgress, fitOpts = {} } = opts;
   const rng = mulberry32(seed);
   const samples = new Map(), capSamples = new Map();
   const lagSamples = Object.fromEntries(groups.map((g) => [g, grid.map(() => [])]));
   const capGapSamples = Object.fromEntries(groups.map((g) => [g, grid.map(() => [])]));
+  const slopeSamples = Object.fromEntries(groups.map((g) => [g, { months: [], cap: [] }]));
   for (let r = 0; r < reps; r++) {
     const weights = new Map();
     for (let k = 0; k < benchIds.length; k++) {
@@ -496,6 +520,11 @@ export async function bootstrap(data, benchIds, mode, base, opts = {}) {
           lagSamples[g][j].push(byT.get(T).lagMonths);
           capGapSamples[g][j].push(byT.get(T).capGap);
         });
+        if (days) {
+          const m = gapTrend(lags[g], "lagMonths", days), c = gapTrend(lags[g], "capGap", days);
+          if (m) slopeSamples[g].months.push(m.slope);
+          if (c) slopeSamples[g].cap.push(c.slope);
+        }
       }
     }
     onProgress?.(r + 1, reps);
@@ -520,5 +549,11 @@ export async function bootstrap(data, benchIds, mode, base, opts = {}) {
       const m = lagSamples[g][j], c = capGapSamples[g][j];
       return m.length >= reps / 2 ? { T, lo: q(m, a), hi: q(m, 1 - a), capLo: q(c, a), capHi: q(c, 1 - a) } : null;
     }).filter(Boolean);
-  return { dateCI, capCI, lagCI, reps };
+  const trendCI = {};
+  if (days)
+    for (const g of groups) {
+      const { months: m, cap: c } = slopeSamples[g];
+      if (m.length >= reps / 2) trendCI[g] = { lo: q(m, a), hi: q(m, 1 - a), capLo: q(c, a), capHi: q(c, 1 - a) };
+    }
+  return { dateCI, capCI, lagCI, trendCI, reps };
 }

@@ -1,5 +1,5 @@
 import {
-  analyze, bootstrap, dailyGrid, fitCapabilities, FRONTIER_MODES, fromYear, groupLags, releaseGrid, toYear,
+  analyze, bootstrap, dailyGrid, fitCapabilities, gapTrend, FRONTIER_MODES, fromYear, groupLags, releaseGrid, toYear,
 } from "./core.js";
 
 const GROUPS = [
@@ -37,6 +37,7 @@ const state = {
   mode: "interp",
   minBench: 2,
   lagUnit: "months",
+  showTrend: true,
   scatterView: "leaders", // "leaders": each group's record-setters; "labs": each lab's record-setters; "all": every model
   labsOn: new Set(["OpenAI", "Anthropic", "Google DeepMind", "DeepSeek", "Moonshot"]),
   result: null,
@@ -232,6 +233,7 @@ function buildControls() {
   }
 
   $("min-bench").addEventListener("change", (e) => { state.minBench = Number(e.target.value); settingsChanged(); });
+  $("trend-toggle").addEventListener("change", (e) => { state.showTrend = e.target.checked; renderLag(); });
   $("ci-toggle").addEventListener("change", (e) => { state.showCI = e.target.checked; updateIntervals(); });
   $("search").addEventListener("input", (e) => { state.filter = e.target.value.toLowerCase(); renderTable(); });
   document.querySelectorAll("#model-table th").forEach((th) =>
@@ -369,6 +371,7 @@ async function updateIntervals() {
       capCI: new Map(Object.entries(run.caps ?? {}).map(([i, [lo, hi]]) => [Number(i), { lo, hi }])),
       lagCI: Object.fromEntries(Object.entries(run.lags).map(([g, pts]) =>
         [g, pts.map(([T, lo, hi, capLo, capHi]) => ({ T: toYear(T), lo, hi, capLo, capHi }))])),
+      trendCI: Object.fromEntries(Object.entries(run.trends ?? {}).map(([g, [lo, hi, capLo, capHi]]) => [g, { lo, hi, capLo, capHi }])),
       reps: file.reps,
     };
     status.textContent = "";
@@ -382,6 +385,7 @@ async function updateIntervals() {
     reps,
     groups: LAG_GROUPS,
     grid: state.grid,
+    days: state.dayGrid,
     fitOpts: { minBenchmarks: state.minBench, reference: state.selected.size === state.data.benchmarks.length ? null : state.reference },
     onProgress: (d, n) => { if (token === ciToken) status.textContent = `computing ${Math.round((100 * d) / n)}%`; },
   });
@@ -485,6 +489,19 @@ function legendSvg(g, line = false) {
   return `<svg width="10" height="10">${shapes[g.svg]}</svg>`;
 }
 
+// Trend slopes (from renderLag) beside the gap chart's legend entries.
+function showTrendNotes() {
+  for (const s of $("legend-lag").children) {
+    s.querySelector(".trend")?.remove();
+    const note = state.trendNotes?.[s.dataset.key];
+    if (!note) continue;
+    const t = document.createElement("span");
+    t.className = "trend";
+    t.textContent = note;
+    s.append(t);
+  }
+}
+
 function renderLegends() {
   for (const id of ["legend-scatter", "legend-lag", "legend-frontier", "legend-labs"]) $(id).hidden = false;
   const fill = (el, groups, line) => {
@@ -493,6 +510,7 @@ function renderLegends() {
       const s = document.createElement("span");
       s.innerHTML = legendSvg(g, line);
       s.append(g.key);
+      s.dataset.key = g.key;
       el.append(s);
     }
   };
@@ -521,6 +539,7 @@ function renderLegends() {
   diag.append("Frontier (y = x)");
   $("legend-scatter").append(diag);
   fill($("legend-lag"), GROUPS.slice(0, 3), true);
+  showTrendNotes();
   fill($("legend-frontier"), GROUPS.slice(0, 3), false);
   fill($("legend-labs"), GROUPS.slice(0, 3), false);
   const rel = document.createElement("span");
@@ -769,6 +788,26 @@ function renderLag() {
       hovertemplate: "%{text}<extra></extra>",
     });
   }
+  // Straight-line trend of each non-leading group's gap (the US closed gap is zero whenever
+  // a US closed model leads, so a trend says little), with its slope beside the group's legend entry.
+  const notes = {};
+  if (state.showTrend) {
+    for (const g of GROUPS.slice(1, 3)) {
+      const tr = gapTrend(state.lags[g.key], months ? "lagMonths" : "capGap", state.dayGrid);
+      if (!tr) continue;
+      traces.push({
+        x: [isoOf(tr.t0), isoOf(tr.t1)], y: [tr.y0, tr.y1], mode: "lines",
+        line: { color: css(g.color), width: 1.5, dash: "dash" }, hoverinfo: "skip",
+      });
+      const ci = state.ci?.trendCI?.[g.key];
+      const lo = months ? ci?.lo : ci?.capLo, hi = months ? ci?.hi : ci?.capHi;
+      const unit = months ? "months" : capUnit().short;
+      const sgn = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1);
+      notes[g.key] = `${sgn(tr.slope)} ${unit}/year` + (lo != null ? ` (90% CI ${sgn(lo)} to ${sgn(hi)})` : "");
+    }
+  }
+  state.trendNotes = notes;
+  showTrendNotes();
   // Start the axis just before the first non-leading group has a model at frontier level.
   const firsts = GROUPS.slice(1, 3).map((g) => state.lags[g.key]?.[0]?.T).filter(Number.isFinite);
   const x0 = firsts.length ? Math.min(...firsts) - 0.15 : null;

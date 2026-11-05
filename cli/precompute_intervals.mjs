@@ -7,7 +7,7 @@
 // Writes site/data/intervals.json. Re-run after scripts/build_data.py.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { analyze, bootstrap, fitCapabilities, fromYear, releaseGrid, toYear } from "../site/core.js";
+import { analyze, bootstrap, dailyGrid, fitCapabilities, fromYear, releaseGrid, toYear } from "../site/core.js";
 
 // Frontier curves offered on the site (keep in sync with MODE_SHORT in site/app.js).
 const SITE_MODES = ["step", "interp"];
@@ -47,13 +47,15 @@ for (const sel of selections) {
       const fitOpts = { minBenchmarks, reference: sel.key === "all" ? null : reference };
       const base = analyze(data, sel.ids, mode, fitOpts);
       if (!base.frontier) continue;
-      const grid = releaseGrid(data);
-      const ci = await bootstrap(data, sel.ids, mode, base, { reps, groups: GROUPS, grid, fitOpts });
+      const grid = releaseGrid(data), days = dailyGrid(data);
+      const ci = await bootstrap(data, sel.ids, mode, base, { reps, groups: GROUPS, grid, days, fitOpts });
       runs[`${sel.key}|${mode}|${minBenchmarks}`] = {
         dates: Object.fromEntries([...ci.dateCI].map(([i, { lo, hi }]) => [i, [r4(lo), r4(hi)]])),
         caps: Object.fromEntries([...ci.capCI].map(([i, { lo, hi }]) => [i, [r2(lo), r2(hi)]])),
         // [month, months lo, months hi, capability gap lo, capability gap hi]
         lags: Object.fromEntries(GROUPS.map((g) => [g, changesOnly(ci.lagCI[g].map((p) => [fromYear(p.T), r2(p.lo), r2(p.hi), r2(p.capLo), r2(p.capHi)]))])),
+        // Gap trend slopes per year: [months lo, months hi, capability lo, capability hi]
+        trends: Object.fromEntries(Object.entries(ci.trendCI).map(([g, t]) => [g, [r2(t.lo), r2(t.hi), r2(t.capLo), r2(t.capHi)]])),
       };
       process.stdout.write(`\r${done}/${total}  ${sel.key} | ${mode} | min ${minBenchmarks}`.padEnd(70));
     }
