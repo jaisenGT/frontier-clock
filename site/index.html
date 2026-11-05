@@ -184,8 +184,8 @@
           score is pinned at 130 and GPT-5’s score is pinned at 150. Epoch pins these two models here as well. As a result, our values match Epoch’s
           published ECI with <span id="eci-corr">r = 0.997</span>, typically within around a point. When displaying a subset of benchmarks,
           we rescale scores linearly such that the mean and standard deviation match those of the all-benchmarks condition so that the units
-          are comparable. This rescaling is our own, not Epoch's official ECI methodology. Thus, our values will differ from theirs for
-          subsets of the benchmarks.</li>
+          are comparable. This rescaling is our own, not Epoch's official ECI methodology. Thus, our ECI-scaled capability values can differ
+          from their published ECI scores.</li>
         <li><strong>Frontier.</strong> A model is considered at the frontier if, when it was released, it was the most capable model in the world according to Epoch's data.
           The frontier function F(t) is built from these models either as a running max (like a staircase) or by interpolating between
           successive frontier models.</li>
