@@ -455,7 +455,7 @@ function baseLayout(extra = {}) {
   };
   return {
     paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
-    font: { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', color: css("--text-primary"), size: 13 },
+    font: { family: css("--font-ui"), color: css("--text-primary"), size: 13 },
     margin: { l: 56, r: 16, t: 28, b: 44 },
     showlegend: false,
     hovermode: "closest",
