@@ -79,13 +79,14 @@
       </div>
       <div class="control-pair">
       <div class="control">
-        <label class="control-label" for="min-bench">Min. benchmarks</label>
-        <select id="min-bench">
-          <option value="1">1</option>
-          <option value="2" selected>2</option>
-          <option value="3">3</option>
-          <option value="5">5</option>
-        </select>
+        <span class="control-label" id="minb-label">Min. benchmarks</span>
+        <div class="dropdown" id="minb-dd">
+          <button id="minb-btn" class="btn dd-btn dd-small" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="minb-panel" aria-labelledby="minb-label minb-value">
+            <span id="minb-value">2</span>
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="minb-panel" class="dd-panel dd-menu" role="listbox" aria-labelledby="minb-label" hidden></div>
+        </div>
       </div>
       <label class="control switch">
         <input type="checkbox" id="ci-toggle" role="switch">

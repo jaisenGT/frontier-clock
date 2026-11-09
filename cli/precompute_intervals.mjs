@@ -14,7 +14,7 @@ const SITE_MODES = ["step", "interp"];
 
 const args = process.argv.slice(2);
 const reps = Number(args[args.indexOf("--reps") + 1] || 0) || 1000;
-const MIN_BENCH = [1, 2, 3, 5]; // keep in sync with the <select> in index.html
+const MIN_BENCH = [1, 2, 3, 5]; // keep in sync with the Min. benchmarks menu in site/app.js
 const GROUPS = ["US closed", "China", "Open weights (non-China)"];
 
 const dataUrl = new URL("../site/data/frontier_clock.json", import.meta.url);

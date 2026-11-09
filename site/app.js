@@ -232,9 +232,32 @@ function buildControls() {
     lagSeg.append(b);
   }
 
-  $("min-bench").addEventListener("change", (e) => { state.minBench = Number(e.target.value); settingsChanged(); });
-  $("trend-toggle").addEventListener("change", (e) => { state.showTrend = e.target.checked; renderLag(); });
-  $("ci-toggle").addEventListener("change", (e) => { state.showCI = e.target.checked; updateIntervals(); });
+  // Min. benchmarks menu (keep the options in sync with MIN_BENCH in cli/precompute_intervals.mjs).
+  const mbBtn = $("minb-btn"), mbPanel = $("minb-panel");
+  const mbOpts = [1, 2, 3, 5].map((n) => {
+    const o = document.createElement("button");
+    o.type = "button"; o.role = "option"; o.className = "dd-option"; o.dataset.n = n;
+    o.textContent = n;
+    o.addEventListener("click", () => { mbOpen(false); mbBtn.focus(); if (state.minBench !== n) { state.minBench = n; settingsChanged(); } });
+    mbPanel.append(o);
+    return o;
+  });
+  const mbOpen = (open) => {
+    mbPanel.hidden = !open; mbBtn.setAttribute("aria-expanded", String(open));
+    if (open) mbOpts.find((o) => Number(o.dataset.n) === state.minBench)?.focus();
+  };
+  mbBtn.addEventListener("click", () => mbOpen(mbPanel.hidden));
+  document.addEventListener("click", (e) => { if (!$("minb-dd").contains(e.target)) mbOpen(false); });
+  mbPanel.addEventListener("keydown", (e) => {
+    const k = mbOpts.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); mbOpts[(k + (e.key === "ArrowDown" ? 1 : mbOpts.length - 1)) % mbOpts.length].focus(); }
+    if (e.key === "Escape" || e.key === "Tab") { mbOpen(false); if (e.key === "Escape") mbBtn.focus(); }
+  });
+
+  // Let a switch paint its new position before the (blocking) chart redraw.
+  const afterPaint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
+  $("trend-toggle").addEventListener("change", (e) => { state.showTrend = e.target.checked; afterPaint().then(renderLag); });
+  $("ci-toggle").addEventListener("change", (e) => { state.showCI = e.target.checked; afterPaint().then(updateIntervals); });
   $("search").addEventListener("input", (e) => { state.filter = e.target.value.toLowerCase(); renderTable(); });
   document.querySelectorAll("#model-table th").forEach((th) =>
     th.addEventListener("click", () => {
@@ -280,6 +303,8 @@ function syncControls() {
   $("domain-summary").textContent = selectionSummary();
   $("bench-count").textContent = `${state.selected.size} of ${data.benchmarks.length} benchmarks`;
   document.querySelectorAll("#mode-seg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === state.mode));
+  $("minb-value").textContent = state.minBench;
+  document.querySelectorAll("#minb-panel .dd-option").forEach((o) => o.setAttribute("aria-selected", Number(o.dataset.n) === state.minBench));
   document.querySelectorAll("#lag-unit button").forEach((b) => b.setAttribute("aria-checked", b.dataset.unit === state.lagUnit));
   document.querySelectorAll("#scatter-view button").forEach((b) => b.setAttribute("aria-checked", b.dataset.view === state.scatterView));
   const diagonal = " Each model along the diagonal was the world’s best model when it launched. The vertical gap between a model and the diagonal is how far behind that model was when it was released.";
@@ -913,5 +938,10 @@ function renderTable() {
   tbody.append(frag);
 }
 
+
+// Show focus rings only for keyboard use: Chrome also shows them when a select or input is clicked.
+const root = document.documentElement;
+document.addEventListener("pointerdown", () => (root.dataset.input = "mouse"), true);
+document.addEventListener("keydown", (e) => { if (e.key === "Tab") root.dataset.input = "keyboard"; }, true);
 
 main();
