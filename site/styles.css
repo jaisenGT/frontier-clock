@@ -81,7 +81,7 @@ a:focus-visible { border-radius: 4px; }
 .brand-mark { width: 22px; height: 22px; }
 .nav { display: flex; gap: 4px; margin-left: auto; }
 .nav a { color: var(--text-secondary); text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 8px; }
-.nav a:hover { color: var(--text-primary); background: var(--accent-wash); }
+@media (hover: hover) { .nav a:hover { color: var(--text-primary); background: var(--accent-wash); } }
 
 /* ---------- hero ---------- */
 
@@ -129,7 +129,8 @@ a:focus-visible { border-radius: 4px; }
 .dd-panel.dd-menu { width: 100%; padding: 4px; border-radius: 10px; top: calc(100% + 6px); }
 .dd-option { display: block; width: 100%; border: 0; background: none;
   font: inherit; font-size: 14px; color: var(--text-primary); padding: 7px 10px; border-radius: 8px; cursor: pointer; text-align: left; }
-.dd-option:hover, .dd-option:focus-visible { background: var(--row-hover); outline: none; }
+.dd-option:focus-visible { background: var(--row-hover); outline: none; }
+@media (hover: hover) { .dd-option:hover { background: var(--row-hover); } }
 .dd-option[aria-selected="true"] { background: var(--accent-wash); color: var(--accent-ink); font-weight: 600; }
 .dd-panel {
   position: absolute; top: calc(100% + 8px); left: 0; z-index: 40;
@@ -140,15 +141,15 @@ a:focus-visible { border-radius: 4px; }
 .dd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 8px 8px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
 .dd-actions { display: inline-flex; gap: 10px; }
 .link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 12px; font-weight: 500; color: var(--accent-ink); cursor: pointer; }
-.link-btn:hover { text-decoration: underline; }
+@media (hover: hover) { .link-btn:hover { text-decoration: underline; } }
 .dd-domain { border-radius: 10px; }
 .dd-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; font-size: 14px; color: var(--text-primary); }
-.dd-row:hover { background: var(--row-hover); }
+@media (hover: hover) { .dd-row:hover { background: var(--row-hover); } }
 .dd-row label { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; min-width: 0; }
 .dd-row input, .dd-bench input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; flex: none; }
 .dd-row .n { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .dd-expand { border: 0; background: none; color: var(--text-muted); cursor: pointer; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
-.dd-expand:hover { background: var(--border); color: var(--text-primary); }
+@media (hover: hover) { .dd-expand:hover { background: var(--border); color: var(--text-primary); } }
 .dd-expand svg { width: 12px; height: 12px; transition: transform 120ms; }
 .dd-expand[aria-expanded="true"] svg { transform: rotate(90deg); }
 .dd-benches { padding: 2px 8px 8px 33px; display: grid; gap: 1px; }
@@ -158,11 +159,11 @@ a:focus-visible { border-radius: 4px; }
 /* intervals switch */
 .switch { cursor: pointer; user-select: none; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.switch .track { position: relative; width: 34px; height: 20px; border-radius: 999px; background: var(--border-strong); transition: background 150ms; flex: none; }
+.switch .track { position: relative; width: 34px; height: 20px; border-radius: 999px; background: var(--border-strong); flex: none; }
 .switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(11, 11, 11, 0.25); transition: transform 150ms; }
-.switch:hover .track { background: var(--border-hover); }
+@media (hover: hover) { .switch:hover .track { background: var(--border-hover); } }
 .switch input:checked + .track { background: var(--accent); }
-.switch:hover input:checked + .track { background: var(--accent-ink); }
+@media (hover: hover) { .switch:hover input:checked + .track { background: var(--accent-ink); } }
 .switch input:checked + .track::after { transform: translateX(14px); }
 .switch input:focus-visible + .track { outline: 3px solid rgba(17, 24, 39, 0.14); outline-offset: 1px; }
 :root[data-input="mouse"] .switch input:focus-visible + .track { outline: none; }
@@ -172,13 +173,14 @@ a:focus-visible { border-radius: 4px; }
   border: 0; border-radius: 7px; background: transparent; color: var(--text-muted);
   padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer;
 }
-.segmented button:hover { color: var(--text-primary); background: var(--hover); }
+@media (hover: hover) { .segmented button:hover { color: var(--text-primary); background: var(--hover); } }
 /* An invisible bold copy of the label reserves the selected (bold) width, so switching doesn't shift what's beside it. */
 .segmented button { display: inline-flex; flex-direction: column; align-items: center; }
 .segmented button::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden; visibility: hidden; }
 .segmented button[aria-checked="true"] { background: var(--surface); color: var(--text-primary); font-weight: 600; box-shadow: 0 1px 2px rgba(11, 11, 11, 0.12); }
 .lag-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 10px; }
 .lag-controls .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.legend .legend-text, .legend .legend-text .trend { display: inline; }
 .legend .trend { color: var(--text-muted); }
 .head-row { display: flex; align-items: center; gap: 10px 18px; margin-top: 4px; }
 .head-row .segmented { flex: none; margin-left: auto; }
@@ -190,7 +192,7 @@ a:focus-visible { border-radius: 4px; }
 }
 /* Hover: the same darker grey border and faint fill on every boxed control. */
 .btn { background: transparent; }
-.btn:hover { border-color: var(--border-hover); background: var(--hover); }
+@media (hover: hover) { .btn:hover { border-color: var(--border-hover); background: var(--hover); } }
 .btn { cursor: pointer; font-weight: 500; }
 .btn:disabled { opacity: 0.6; cursor: progress; }
 
@@ -232,15 +234,17 @@ main.wrap { padding-top: 40px; padding-bottom: 64px; }
 .search { width: 280px; max-width: 100%; }
 .table-wrap { overflow: auto; max-height: 560px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); font-weight: 600; font-size: 12px; color: var(--text-muted); cursor: pointer; user-select: none; }
-th:hover { color: var(--text-primary); }
+@media (hover: hover) { th:hover { color: var(--text-primary); } }
 th[aria-sort="ascending"]::after { content: " ↑"; color: var(--accent-ink); }
 th[aria-sort="descending"]::after { content: " ↓"; color: var(--accent-ink); }
-tbody tr:hover td { background: var(--accent-wash); }
+@media (hover: hover) { tbody tr:hover td { background: var(--accent-wash); } }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 td .ci { color: var(--text-muted); font-size: 12px; }
+/* Long model names wrap rather than forcing a horizontal scroll on wide screens. */
+td:first-child { white-space: normal; min-width: 180px; }
 tr.record td:first-child { font-weight: 600; }
 td.reading-cell { font-weight: 600; color: var(--text-primary); }
 

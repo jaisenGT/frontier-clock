@@ -257,8 +257,8 @@ function buildControls() {
     if (e.key === "Escape" || e.key === "Tab") { mbOpen(false); if (e.key === "Escape") mbBtn.focus(); }
   });
 
-  // Let a switch paint its new position before the (blocking) chart redraw.
-  const afterPaint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
+  // Let a switch finish sliding (150 ms) before the blocking chart redraw, which would freeze it mid-way.
+  const afterPaint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 160)));
   $("trend-toggle").addEventListener("change", (e) => { state.showTrend = e.target.checked; afterPaint().then(renderLag); });
   $("ci-toggle").addEventListener("change", (e) => { state.showCI = e.target.checked; afterPaint().then(updateIntervals); });
   $("search").addEventListener("input", (e) => { state.filter = e.target.value.toLowerCase(); renderTable(); });
@@ -525,8 +525,8 @@ function showTrendNotes() {
     if (!note) continue;
     const t = document.createElement("span");
     t.className = "trend";
-    t.textContent = note;
-    s.append(t);
+    t.textContent = ` ${note}`;
+    (s.querySelector(".legend-text") ?? s).append(t);
   }
 }
 
@@ -537,7 +537,10 @@ function renderLegends() {
     for (const g of groups) {
       const s = document.createElement("span");
       s.innerHTML = legendSvg(g, line);
-      s.append(g.key);
+      const t = document.createElement("span");
+      t.className = "legend-text";
+      t.textContent = g.key;
+      s.append(t);
       s.dataset.key = g.key;
       el.append(s);
     }
@@ -946,5 +949,9 @@ function renderTable() {
 const root = document.documentElement;
 document.addEventListener("pointerdown", () => (root.dataset.input = "mouse"), true);
 document.addEventListener("keydown", (e) => { if (e.key === "Tab") root.dataset.input = "keyboard"; }, true);
+// On touch screens a tap opens a chart's hover box; tapping anywhere outside that chart closes it.
+document.addEventListener("pointerdown", (e) => {
+  for (const g of document.querySelectorAll(".js-plotly-plot")) if (!g.contains(e.target)) Plotly.Fx.unhover(g);
+}, true);
 
 main();
