@@ -167,7 +167,7 @@ a:focus-visible { border-radius: 4px; }
 .switch input:focus-visible + .track { outline: 3px solid rgba(17, 24, 39, 0.14); outline-offset: 1px; }
 :root[data-input="mouse"] .switch input:focus-visible + .track { outline: none; }
 
-.segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: transparent; border: 1px solid var(--border); border-radius: 10px; }
+.segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--page-raised); border: 1px solid var(--border); border-radius: 10px; }
 .segmented button {
   border: 0; border-radius: 7px; background: transparent; color: var(--text-muted);
   padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer;
