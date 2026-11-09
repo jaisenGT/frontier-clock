@@ -205,6 +205,7 @@ function buildControls() {
     b.role = "radio";
     b.dataset.mode = k;
     b.textContent = label;
+    b.dataset.label = label;
     b.title = FRONTIER_MODES[k];
     b.addEventListener("click", () => { state.mode = k; settingsChanged(); });
     seg.append(b);
@@ -217,6 +218,7 @@ function buildControls() {
     b.role = "radio";
     b.dataset.view = k;
     b.textContent = label;
+    b.dataset.label = label;
     b.addEventListener("click", () => { state.scatterView = k; syncControls(); renderLegends(); renderScatter(); });
     viewSeg.append(b);
   }
@@ -228,6 +230,7 @@ function buildControls() {
     b.role = "radio";
     b.dataset.unit = k;
     b.textContent = label;
+    b.dataset.label = label;
     b.addEventListener("click", () => { state.lagUnit = k; syncControls(); renderLag(); });
     lagSeg.append(b);
   }
