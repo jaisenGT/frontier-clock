@@ -19,9 +19,14 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <!-- Inter is hosted here and fetched immediately, so text never shows in a fallback font first (see styles.css). -->
+  <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly-basic.min.js"></script>
+  <!-- The page restores its own scroll position once the charts are drawn (see app.js); the browser's
+       own attempt lands while the page is still growing, at a different spot each time. -->
+  <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly-basic.min.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -59,7 +64,7 @@
       <div class="control dropdown" id="domain-dd">
         <span class="sr-only" id="domains-label">Benchmarks</span>
         <button id="domain-btn" class="btn dd-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="domain-panel" aria-describedby="domains-label">
-          <span id="domain-summary">All domains</span>
+          <span id="domain-summary">All benchmarks</span>
           <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <div id="domain-panel" class="dd-panel" hidden>
@@ -75,7 +80,7 @@
       </div>
       <div class="control">
         <span class="sr-only" id="mode-label">Frontier curve</span>
-        <div class="segmented" id="mode-seg" role="radiogroup" aria-labelledby="mode-label"></div>
+        <div class="segmented" id="mode-seg" role="radiogroup" aria-labelledby="mode-label"><button type="button" role="radio" data-mode="step" data-label="Running max" aria-checked="false">Running max</button><button type="button" role="radio" data-mode="interp" data-label="Interpolated" aria-checked="true">Interpolated</button></div>
       </div>
       <div class="control-pair">
       <div class="control">
@@ -104,7 +109,7 @@
         <h2>Frontier-equivalent date vs. release date</h2>
         <div class="head-row">
           <p id="scatter-desc"></p>
-          <div class="segmented" id="scatter-view" role="radiogroup" aria-label="Models shown"></div>
+          <div class="segmented" id="scatter-view" role="radiogroup" aria-label="Models shown"><button type="button" role="radio" data-view="leaders" data-label="Group leaders" aria-checked="true">Group leaders</button><button type="button" role="radio" data-view="labs" data-label="By lab" aria-checked="false">By lab</button><button type="button" role="radio" data-view="all" data-label="All models" aria-checked="false">All models</button></div>
         </div>
       </div>
       <div id="legend-scatter" class="legend"></div>
@@ -117,7 +122,7 @@
           <h2>Gap to the frontier</h2>
           <p id="lag-desc"></p>
           <div class="lag-controls">
-            <div class="segmented" id="lag-unit" role="radiogroup" aria-label="Gap units"></div>
+            <div class="segmented" id="lag-unit" role="radiogroup" aria-label="Gap units"><button type="button" role="radio" data-unit="months" data-label="Months" aria-checked="true">Months</button><button type="button" role="radio" data-unit="cap" data-label="Capability" aria-checked="false">Capability</button></div>
             <label class="switch">
               <input type="checkbox" id="trend-toggle" role="switch" checked>
               <span class="track" aria-hidden="true"></span>

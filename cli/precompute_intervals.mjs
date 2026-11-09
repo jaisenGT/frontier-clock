@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { analyze, bootstrap, dailyGrid, fitCapabilities, fromYear, releaseGrid, toYear } from "../site/core.js";
 
-// Frontier curves offered on the site (keep in sync with MODE_SHORT in site/app.js).
+// Frontier curves offered on the site (keep in sync with the #mode-seg buttons in site/index.html).
 const SITE_MODES = ["step", "interp"];
 
 const args = process.argv.slice(2);

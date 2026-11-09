@@ -29,8 +29,6 @@ const LABS = [
 const DASH_SVG = { solid: "", dash: "5 3", dot: "1.5 3" };
 
 // Frontier curves offered on the site (core.js also has "linear" and "broken", kept for the CLI).
-const MODE_SHORT = { step: "Running max", interp: "Interpolated" };
-
 const state = {
   data: null,
   selected: new Set(),
@@ -58,6 +56,34 @@ const flagMark = (f) => (f ? "*" : "");
 
 // ---------- boot ----------
 
+// Scroll position: saved when leaving the page and restored on reload or back/forward once
+// everything is drawn, so the page always starts at the top and then moves to where it was.
+const SCROLL_KEY = "scroll:" + location.pathname;
+window.addEventListener("pagehide", () => { try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch {} });
+function restoreScroll() {
+  const nav = performance.getEntriesByType("navigation")[0]?.type;
+  let y = null;
+  try { if (nav === "reload" || nav === "back_forward") y = Number(sessionStorage.getItem(SCROLL_KEY)); } catch {}
+  if (y) glideTo(y);
+  else if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+}
+// A quick ease-out scroll (~0.6 s); the browser's own smooth scroll is slow over long distances.
+// Stops if the reader scrolls or taps meanwhile.
+function glideTo(y, ms = 600) {
+  const y0 = window.scrollY, dy = y - y0, t0 = performance.now();
+  let stopped = false;
+  const stop = () => (stopped = true);
+  const opts = { once: true, passive: true };
+  ["wheel", "touchstart", "keydown", "pointerdown"].forEach((ev) => window.addEventListener(ev, stop, opts));
+  const step = () => {
+    if (stopped) return;
+    const p = Math.min(1, (performance.now() - t0) / ms);
+    window.scrollTo({ top: y0 + dy * (1 - (1 - p) ** 3), behavior: "instant" });
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 async function main() {
   const resp = await fetch("data/frontier_clock.json");
   state.data = await resp.json();
@@ -69,8 +95,11 @@ async function main() {
   state.data.benchmarks.forEach((_, i) => state.selected.add(i));
   $("credit").textContent = state.data.retrieved ? `Data retrieved ${state.data.retrieved}.` : "";
   buildControls();
-  recompute();
+  // Hero numbers first, painted before the slower chart drawing starts.
   renderHeadline();
+  await new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
+  recompute();
+  restoreScroll();
   // After a resize, redraw the charts that adapt to their width (labels, tick counts), then
   // have Plotly re-measure every chart: a redraw alone keeps the old width.
   let resizeTimer = null, lastWidth = window.innerWidth;
@@ -89,7 +118,7 @@ async function main() {
 async function renderHeadline() {
   const { data } = state;
   const mode = "interp", minBench = 2;
-  const res = analyze(data, data.benchmarks.map((_, i) => i), mode, { minBenchmarks: minBench });
+  const res = fullFit(mode, minBench);
   if (!res.frontier) return;
   const grid = releaseGrid(data);
   const lags = groupLags(res.rows, LAG_GROUPS, grid);
@@ -198,42 +227,16 @@ function buildControls() {
   $("sel-all").addEventListener("click", () => { data.benchmarks.forEach((_, i) => state.selected.add(i)); settingsChanged(); });
   $("sel-none").addEventListener("click", () => { state.selected.clear(); settingsChanged(); });
 
-  const seg = $("mode-seg");
-  for (const [k, label] of Object.entries(MODE_SHORT)) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.role = "radio";
-    b.dataset.mode = k;
-    b.textContent = label;
-    b.dataset.label = label;
+  // The toggle buttons are written in index.html (so they show before the data loads); wire them up here.
+  for (const b of $("mode-seg").children) {
+    const k = b.dataset.mode;
     b.title = FRONTIER_MODES[k];
     b.addEventListener("click", () => { state.mode = k; settingsChanged(); });
-    seg.append(b);
   }
-
-  const viewSeg = $("scatter-view");
-  for (const [k, label] of [["leaders", "Group leaders"], ["labs", "By lab"], ["all", "All models"]]) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.role = "radio";
-    b.dataset.view = k;
-    b.textContent = label;
-    b.dataset.label = label;
-    b.addEventListener("click", () => { state.scatterView = k; syncControls(); renderLegends(); renderScatter(); });
-    viewSeg.append(b);
-  }
-
-  const lagSeg = $("lag-unit");
-  for (const [k, label] of [["months", "Months"], ["cap", "Capability"]]) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.role = "radio";
-    b.dataset.unit = k;
-    b.textContent = label;
-    b.dataset.label = label;
-    b.addEventListener("click", () => { state.lagUnit = k; syncControls(); renderLag(); });
-    lagSeg.append(b);
-  }
+  for (const b of $("scatter-view").children)
+    b.addEventListener("click", () => { state.scatterView = b.dataset.view; syncControls(); renderLegends(); renderScatter(); });
+  for (const b of $("lag-unit").children)
+    b.addEventListener("click", () => { state.lagUnit = b.dataset.unit; syncControls(); renderLag(); });
 
   // Min. benchmarks menu (keep the options in sync with MIN_BENCH in cli/precompute_intervals.mjs).
   const mbBtn = $("minb-btn"), mbPanel = $("minb-panel");
@@ -344,7 +347,8 @@ function recompute() {
   // Subsets are put on the all-benchmarks ECI scale (fit once, reused).
   const full = ids.length === state.data.benchmarks.length;
   if (!full && !state.reference) state.reference = fitCapabilities(state.data, state.data.benchmarks.map((_, i) => i)).capability;
-  const res = analyze(state.data, ids, state.mode, { minBenchmarks: state.minBench, reference: full ? null : state.reference });
+  const res = full ? fullFit(state.mode, state.minBench)
+    : analyze(state.data, ids, state.mode, { minBenchmarks: state.minBench, reference: state.reference });
   state.result = res.frontier ? res : null;
   if (state.result) {
     // Gaps change only on release dates (state.grid, also used by the bootstrap);
@@ -360,6 +364,15 @@ function recompute() {
   }
   renderAll();
   updateIntervals();
+}
+
+// All-benchmarks fits by curve mode and minimum, shared by the hero numbers and the charts
+// (so the default fit runs once on load) and reused when switching back to all benchmarks.
+const fullFits = new Map();
+function fullFit(mode, minBench) {
+  const key = `${mode}|${minBench}`;
+  if (!fullFits.has(key)) fullFits.set(key, analyze(state.data, state.data.benchmarks.map((_, i) => i), mode, { minBenchmarks: minBench }));
+  return fullFits.get(key);
 }
 
 // ---------- intervals ----------
@@ -499,7 +512,9 @@ const plotConfig = { responsive: true, displayModeBar: false };
 function emptyChart(id, msg) {
   const legend = { "chart-scatter": "legend-scatter", "chart-lag": "legend-lag", "chart-frontier": "legend-frontier", "chart-labs": "legend-labs" }[id];
   if (legend) $(legend).hidden = true;
+  // Explicit height: Plotly otherwise keeps the size it last drew at (the lab chart's height varies).
   Plotly.react(id, [], baseLayout({
+    height: $(id).clientHeight,
     xaxis: { visible: false, type: "linear" }, yaxis: { visible: false, type: "linear" },
     annotations: [{ text: msg, xref: "paper", yref: "paper", x: 0.5, y: 0.5, showarrow: false, font: { size: 14, color: css("--text-secondary") } }],
   }), { ...plotConfig, staticPlot: true });
@@ -690,9 +705,11 @@ function renderLabs() {
     text: `${Math.max(0, r.lagYears * 12).toFixed(1)} mo${narrow ? "" : " behind"}`, font: { size: 11, color: css("--text-muted") },
   }));
   const el = $("chart-labs");
-  el.style.height = `${Math.max(260, rows.length * 28 + 70)}px`;
+  const height = Math.max(260, rows.length * 28 + 70);
+  el.style.height = `${height}px`;
   const t0 = Math.min(...rows.map((r) => Math.min(r.t, r.fdate))), t1 = Math.max(...rows.map((r) => r.t));
   Plotly.react(el, traces, baseLayout({
+    height, // explicit, or Plotly keeps its previous (possibly taller) size
     margin: { l: 8, r: 16, t: 8, b: 40 },
     xaxis: { type: "date", side: "bottom", range: [isoOf(t0 - 0.1), isoOf(t1 + (narrow ? 0.4 : 0.32))], nticks, tickangle: 0 },
     yaxis: { type: "category", categoryorder: "array", categoryarray: names, autorange: "reversed", showgrid: false, ticks: "", tickfont: { size: 12, color: css("--text-secondary") } },

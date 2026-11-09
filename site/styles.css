@@ -1,3 +1,13 @@
+/* Inter (SIL Open Font License, fonts/Inter-OFL.txt): Google Fonts' variable files, hosted here.
+   font-display: block holds text back for the moment the font takes to load, instead of
+   showing a fallback font and then swapping. */
+@font-face { font-family: Inter; font-style: normal; font-weight: 100 900; font-display: block;
+  src: url(fonts/inter-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: Inter; font-style: normal; font-weight: 100 900; font-display: block;
+  src: url(fonts/inter-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
 /* ---------- tokens ---------- */
 
 :root {
@@ -223,7 +233,8 @@ main.wrap { padding-top: 40px; padding-bottom: 64px; }
 
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: center; }
 .hero-stats { display: grid; gap: 22px; }
-.hero-stats:empty { display: none; }
+/* Space is kept for the numbers while they compute, so the page doesn't shift when they appear. */
+.hero-stats { min-height: 192px; }
 .hero-stats .item { border-left: 3px solid; padding: 2px 0 2px 16px; }
 .hero-stats .lead { font-size: 14px; color: var(--text-secondary); }
 .hero-stats .value { font-size: 40px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; font-variant-numeric: tabular-nums; }
